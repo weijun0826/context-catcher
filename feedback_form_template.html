@@ -9,200 +9,109 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f9f9f9;
         }
-        
+
         h1 {
             color: #1E3A8A;
             text-align: center;
             margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
         }
-        
-        .form-group {
-            margin-bottom: 25px;
+
+        .form-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
         }
-        
-        label {
+
+        iframe {
             display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        
-        input[type="text"],
-        input[type="email"],
-        textarea,
-        select {
+            border: none;
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+            height: 800px;
             border-radius: 4px;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-footer p {
+            margin-bottom: 15px;
             font-size: 16px;
+            color: #555;
         }
-        
-        textarea {
-            height: 120px;
-        }
-        
-        .rating {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-        }
-        
-        .rating > input {
-            display: none;
-        }
-        
-        .rating > label {
-            position: relative;
-            width: 1.1em;
-            font-size: 30px;
-            color: #FFD700;
-            cursor: pointer;
-        }
-        
-        .rating > label::before {
-            content: "\2605";
-            position: absolute;
-            opacity: 0;
-        }
-        
-        .rating > label:hover:before,
-        .rating > label:hover ~ label:before {
-            opacity: 1 !important;
-        }
-        
-        .rating > input:checked ~ label:before {
-            opacity: 1;
-        }
-        
-        button {
+
+        .back-btn {
+            display: inline-block;
             background-color: #1E3A8A;
             color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
+            text-decoration: none;
+            padding: 10px 20px;
             border-radius: 4px;
-            cursor: pointer;
-            display: block;
-            margin: 0 auto;
+            font-weight: bold;
             transition: background-color 0.3s;
         }
-        
-        button:hover {
+
+        .back-btn:hover {
             background-color: #1E40AF;
         }
-        
-        .required:after {
-            content: " *";
-            color: red;
-        }
-        
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .radio-option {
-            margin-bottom: 8px;
-        }
-        
-        @media (max-width: 600px) {
+
+        @media (max-width: 768px) {
             body {
                 padding: 10px;
+            }
+
+            .form-container {
+                padding: 10px;
+            }
+
+            iframe {
+                height: 600px;
             }
         }
     </style>
 </head>
 <body>
     <h1>🧠 Context Catcher 使用者回饋</h1>
-    
-    <form id="feedback-form" action="https://docs.google.com/forms/d/e/YOUR_FORM_ID_HERE/formResponse" method="POST">
-        <div class="form-group">
-            <label for="email" class="required">您的電子郵件</label>
-            <input type="email" id="email" name="entry.123456789" required>
-        </div>
-        
-        <div class="form-group">
-            <label class="required">Context Catcher 是否容易上手？</label>
-            <div class="rating">
-                <input type="radio" id="star5" name="entry.987654321" value="5" required>
-                <label for="star5" title="非常容易">5</label>
-                <input type="radio" id="star4" name="entry.987654321" value="4">
-                <label for="star4" title="容易">4</label>
-                <input type="radio" id="star3" name="entry.987654321" value="3">
-                <label for="star3" title="一般">3</label>
-                <input type="radio" id="star2" name="entry.987654321" value="2">
-                <label for="star2" title="有些困難">2</label>
-                <input type="radio" id="star1" name="entry.987654321" value="1">
-                <label for="star1" title="非常困難">1</label>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="stuck">在使用過程中，您遇到了哪些困難或卡住的地方？</label>
-            <textarea id="stuck" name="entry.246813579"></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label class="required">您在使用時遇到了哪些問題？（可多選）</label>
-            <div class="radio-group">
-                <div class="radio-option">
-                    <input type="checkbox" id="issue1" name="entry.135792468" value="API 相關問題">
-                    <label for="issue1">API 相關問題</label>
-                </div>
-                <div class="radio-option">
-                    <input type="checkbox" id="issue2" name="entry.135792468" value="使用界面不直觀">
-                    <label for="issue2">使用界面不直觀</label>
-                </div>
-                <div class="radio-option">
-                    <input type="checkbox" id="issue3" name="entry.135792468" value="分析結果不準確">
-                    <label for="issue3">分析結果不準確</label>
-                </div>
-                <div class="radio-option">
-                    <input type="checkbox" id="issue4" name="entry.135792468" value="速度太慢">
-                    <label for="issue4">速度太慢</label>
-                </div>
-                <div class="radio-option">
-                    <input type="checkbox" id="issue5" name="entry.135792468" value="沒有遇到問題">
-                    <label for="issue5">沒有遇到問題</label>
-                </div>
-                <div class="radio-option">
-                    <input type="checkbox" id="issue6" name="entry.135792468" value="其他">
-                    <label for="issue6">其他</label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label class="required">您最希望 Context Catcher 新增的功能是什麼？</label>
-            <textarea id="feature" name="entry.975318642" required></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="feedback">其他意見或建議</label>
-            <textarea id="feedback" name="entry.864209753"></textarea>
-        </div>
-        
-        <button type="submit">提交回饋</button>
-    </form>
-    
+
+    <div class="form-container">
+        <!-- 嵌入 Google 表單 -->
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?embedded=true"
+                width="100%"
+                height="800"
+                frameborder="0"
+                marginheight="0"
+                marginwidth="0">
+            載入中…
+        </iframe>
+    </div>
+
+    <div class="form-footer">
+        <p>感謝您的反饋！您的意見對我們非常重要。</p>
+        <a href="https://contextcatcher.streamlit.app" class="back-btn">返回應用</a>
+    </div>
+
     <script>
-        document.getElementById('feedback-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // You can add form validation here if needed
-            
-            // Submit the form
-            this.submit();
-            
-            // Show thank you message or redirect
-            alert('感謝您的反饋！');
-            
-            // Optional: redirect back to the app
-            // window.location.href = 'https://your-app-url.com';
+        // 可以添加一些 JavaScript 來改善用戶體驗
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.includes && e.data.includes('formSubmitted')) {
+                alert('感謝您的反饋！');
+                // 可以選擇重定向回應用
+                // window.location.href = 'https://contextcatcher.streamlit.app';
+            }
         });
     </script>
 </body>
