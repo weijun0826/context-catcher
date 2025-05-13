@@ -1,103 +1,145 @@
-# Context Catcher - OpenAI API with Streamlit
+# Context Catcher - 對話摘要與任務產生器
 
-這個項目展示了如何在 Streamlit 應用程序中安全地使用 OpenAI API，自動摘要對話紀錄並生成任務清單。
+![Context Catcher Demo](demo_screenshot.png)
 
-## 本地開發設置
+Context Catcher 是一個基於 OpenAI API 的 Streamlit 應用程序，能夠自動分析對話紀錄，生成摘要並產出任務清單。這個工具特別適合處理會議記錄、團隊討論和客戶對話，幫助用戶快速理解重點並追蹤待辦事項。
 
-1. **Get your OpenAI API Key**:
+## 🚀 主要功能
 
-   - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
-   - Create a new API key if you don't have one
-   - Copy the API key (it starts with "sk-")
+- **對話分析**：自動理解並分析對話內容
+- **摘要生成**：提供簡潔的 3-5 行摘要
+- **任務清單**：自動提取對話中的任務項目，包含負責人和截止日期
+- **一鍵範例**：提供範例對話快速體驗功能
+- **匯出功能**：支持複製或下載 Markdown 格式的結果
+- **移動端優化**：響應式設計，在手機上也能舒適使用
+- **使用者反饋**：整合 Google Form 收集用戶意見
 
-2. **Add your API Key to the .env file**:
+## 📋 需求
 
-   - Create a `.env` file in this project (use `.env.example` as a template)
-   - Replace `your_api_key_here` with your actual OpenAI API key
-   - Save the file
+- Python 3.7+
+- OpenAI API Key
+- Streamlit 1.0.0+
 
-3. **Install dependencies**:
+## 🛠️ 安裝與設置
 
-   ```bash
-   source venv/bin/activate  # Activate the virtual environment
-   pip install -r requirements.txt
-   ```
+1. **Clone 儲存庫**
 
-4. **運行 Streamlit 應用程序**:
+```bash
+git clone https://github.com/weijun0826/context-catcher.git
+cd context-catcher
+```
 
-   ```bash
-   streamlit run main.py
-   ```
+2. **安裝依賴**
 
-   應用程序將在 http://localhost:8501 啟動。
+```bash
+pip install -r requirements.txt
+```
 
-## Streamlit Cloud 部署
+3. **設置 API Key**
 
-1. **Push your code to GitHub**:
+創建 `.env` 文件，添加你的 OpenAI API Key：
 
-   - Create a new GitHub repository
-   - Push your code to the repository
+```
+OPENAI_API_KEY=your_api_key_here
+```
 
-2. **Deploy on Streamlit Cloud**:
+或在 Streamlit Cloud 中添加到 Secrets 中。
 
-   - Go to [Streamlit Cloud](https://streamlit.io/cloud)
-   - Sign in with your GitHub account
-   - Click "New app" and select your repository
-   - Set the main file path to `main.py`
-   - Add your OpenAI API key in the Secrets section (format shown below)
+4. **啟動應用**
 
-3. **設置 Streamlit Secrets**:
-   - In the Streamlit Cloud dashboard, find your app
-   - Go to "Settings" > "Secrets"
-   - Add your API key in the following format:
-   ```toml
-   OPENAI_API_KEY = "your_api_key_here"
-   ```
+```bash
+streamlit run main.py
+```
 
-## Using OpenAI API in Your Code
+對於着陸頁：
 
-The `openai_example.py` file shows how to use the OpenAI API. Here's the basic pattern:
+```bash
+streamlit run landing_page.py
+```
 
-1. Load the API key from the `.env` file
-2. Initialize the OpenAI client
-3. Make API calls using the client
+## 📱 使用方法
 
-## VSCode Integration
+1. 在文本框中貼上對話記錄，或使用「一鍵貼上範例」按鈕選擇預設範例
+2. 點擊「分析對話紀錄」按鈕
+3. 查看生成的摘要和任務清單
+4. 複製或下載分析結果
 
-This project includes VSCode settings that help with OpenAI API integration:
+## 📸 創建 Demo GIF
 
-- Environment variables are loaded from the `.env` file
-- Python linting is enabled
-- The virtual environment's packages are included in the Python path
+我們提供了一個腳本來幫助你創建演示 GIF：
 
-## API Key 安全最佳實踐
+```bash
+pip install pyautogui pillow
+python demo_gif_creator.py
+```
 
-- **永遠不要**將 API key 直接寫在代碼中
-- **永遠不要**將包含 API key 的文件上傳到版本控制系統
-- 使用 `.env` 文件存儲 API key，並確保它被 `.gitignore` 忽略
-- 如果您不小心上傳了 API key，立即在 OpenAI 平台上重新生成一個新的 key
-- 考慮使用環境變量或專門的密鑰管理服務來存儲敏感信息
+按照屏幕上的指示操作，完成後會生成演示 GIF 文件。
 
-### 上傳到 GitHub 時的安全措施
+## 🔄 使用者反饋
 
-1. **使用 .gitignore**：確保 `.env` 文件被列在 `.gitignore` 中（本項目已設置）
-2. **使用示例文件**：提供一個 `.env.example` 文件，顯示需要哪些環境變量，但不包含實際的 API key
-3. **提交前檢查**：在提交代碼前，使用 `git status` 確認敏感文件不會被上傳
-4. **使用 Git 鉤子**：考慮設置 pre-commit 鉤子來防止敏感信息被提交
+我們重視您的意見！點擊應用中的「提供反饋」按鈕，分享您的使用體驗和建議。主要收集以下反饋：
 
-### 部署注意事項
+1. 應用是否容易上手？
+2. 使用過程中遇到哪些困難？
+3. 最希望添加什麼新功能？
 
-當部署到生產環境時：
+## 📊 Landing Page
 
-- 使用環境變量而不是 `.env` 文件
-- 考慮使用 Streamlit Secrets Management 或其他密鑰管理服務
-- 定期輪換您的 API key
+使用 `landing_page.py` 來展示應用的主要功能和優勢。這個頁面包含：
 
-## Troubleshooting
+- 功能亮點
+- 使用說明
+- 用戶評價
+- 常見問題
+- 行動號召按鈕
 
-If you encounter issues:
+## 📄 文件結構
 
-1. Make sure your API key is correctly set in the `.env` file
-2. Ensure the virtual environment is activated
-3. Check that all dependencies are installed
-4. Verify your OpenAI account has sufficient credits
+```
+context-catcher/
+├── .env                     # API Key 環境變量（未包含在 Git 中）
+├── .gitignore               # Git 忽略文件
+├── main.py                  # 主要應用代碼
+├── landing_page.py          # 着陸頁面
+├── demo_gif_creator.py      # Demo GIF 創建腳本
+├── feedback_form_template.html # Google Form 反饋表單模板
+├── requirements.txt         # 項目依賴
+├── check_api_key.py         # API Key 檢查工具
+├── check_account.py         # 賬戶檢查工具
+├── test_embeddings.py       # Embeddings 測試工具
+└── README.md                # 項目說明
+```
+
+## 🤔 常見問題
+
+### API Key 無法正常工作？
+
+使用 `check_api_key.py` 腳本來驗證你的 API Key：
+
+```bash
+python check_api_key.py
+```
+
+### 賬戶配額問題？
+
+使用 `check_account.py` 來檢查你的賬戶狀態：
+
+```bash
+python check_account.py
+```
+
+## 📋 後續開發計劃
+
+- [ ] 多語言支持
+- [ ] 自定義提示詞選項
+- [ ] 集成到日曆和任務管理工具
+- [ ] 文件上傳分析功能
+- [ ] 語音轉文字功能
+
+## 📝 授權
+
+MIT
+
+---
+
+使用 Context Catcher 提高您的工作效率！如有任何問題，請隨時提出 issue 或聯繫我們。
