@@ -42,12 +42,12 @@ st.markdown("""
     .css-1offfwp {
         font-size: 14px !important;
     }
-    
+
     /* Improve form styling */
     .stTextArea textarea {
         border-radius: 10px;
     }
-    
+
     /* Feedback button styles */
     .feedback-btn {
         background-color: #f0f2f6;
@@ -160,12 +160,12 @@ PM：好的，我們會確保在月底前完成註冊流程的優化。所有人
 with st.sidebar:
     st.header("關於 Context Catcher")
     st.write("Context Catcher 幫助你自動分析會議記錄或對話內容，生成摘要和任務清單，讓你的工作更有效率。")
-    
+
     st.subheader("使用說明")
     st.write("1. 將對話記錄貼到輸入框中")
     st.write("2. 點擊「分析對話紀錄」按鈕")
     st.write("3. 獲取摘要和任務清單")
-    
+
     # 加入反饋按鈕
     st.markdown("### 我們需要您的意見！")
     st.markdown("""
@@ -173,7 +173,7 @@ with st.sidebar:
         🎯 提供反饋
     </a>
     """, unsafe_allow_html=True)
-    
+
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
 
@@ -212,7 +212,7 @@ if analyze_button:
             for i in range(100):
                 time.sleep(0.01)
                 progress_bar.progress(i + 1)
-            
+
             prompt = f"""
 你是一個任務整理助理，請根據以下對話紀錄進行分析，產出：
 
@@ -237,7 +237,7 @@ if analyze_button:
 if st.session_state.analysis_result:
     st.markdown("### 📝 分析結果")
     st.markdown(st.session_state.analysis_result)
-    
+
     # 建立可下載的 Markdown 檔案
     def get_markdown_download_link(markdown_text):
         """產生可下載的 markdown 文件連結"""
@@ -245,9 +245,9 @@ if st.session_state.analysis_result:
         filename = f"context_catcher_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         href = f'<a href="data:file/markdown;base64,{b64}" download="{filename}" class="download-btn">下載 Markdown 檔案</a>'
         return href
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         # 複製到剪貼簿按鈕
         st.download_button(
@@ -257,7 +257,7 @@ if st.session_state.analysis_result:
             mime="text/markdown",
             use_container_width=True
         )
-    
+
     with col2:
         # 下載 Markdown 按鈕
         st.markdown(
