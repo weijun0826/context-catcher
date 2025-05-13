@@ -166,16 +166,16 @@ with st.sidebar:
     st.write("2. 點擊「分析對話紀錄」按鈕")
     st.write("3. 獲取摘要和任務清單")
 
-    # 加入反饋按鈕 - 使用真實的 Google 表單連結
+    # 加入反饋按鈕 - 使用自定義表單模板
     st.markdown("### 我們需要您的意見！")
     st.markdown("""
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?usp=header" target="_blank" class="feedback-btn">
+    <a href="feedback_form_template.html" target="_blank" class="feedback-btn">
         🎯 提供反饋
     </a>
     """, unsafe_allow_html=True)
 
     # 添加說明文字
-    st.caption("點擊上方按鈕，在 Google 表單中提供您的寶貴意見")
+    st.caption("點擊上方按鈕，在表單中提供您的寶貴意見")
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
