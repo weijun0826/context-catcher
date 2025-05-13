@@ -271,7 +271,8 @@ if analyze_button:
 # 顯示結果
 if st.session_state["analysis_result"]:
     st.markdown("### 📝 分析結果")
-    # 結果將在下方顯示，不需要在這裡重複顯示
+    # 使用Streamlit的原生markdown顯示功能顯示結果
+    st.markdown(st.session_state["analysis_result"])
 
     # 建立可下載的 Markdown 檔案
     def get_markdown_download_link(markdown_text):
@@ -338,24 +339,23 @@ if st.session_state["analysis_result"]:
     </script>
     """
 
-    # 創建一個div來顯示分析結果
-    result_id = "analysis_result_" + str(hash(st.session_state["analysis_result"]))
-    result_div = f"""
-    <div id="{result_id}" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-    {st.session_state["analysis_result"]}
-    </div>
+    # 不需要額外的HTML顯示，因為我們已經使用Streamlit的原生markdown顯示功能
+
+    # 創建一個隱藏的textarea來存儲純文本格式的分析結果（用於複製）
+    copy_text_area = f"""
+    <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{st.session_state["analysis_result"]}</textarea>
     """
 
     # 創建複製按鈕
     copy_button_html = f"""
-    <button onclick="copyTextToClipboard(document.getElementById('{result_id}').innerText);"
+    <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
             style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
         📋 複製到剪貼簿
     </button>
     """
 
-    # 顯示分析結果
-    st.markdown(copy_js + result_div, unsafe_allow_html=True)
+    # 顯示JavaScript和隱藏的複製區域
+    st.markdown(copy_js + copy_text_area, unsafe_allow_html=True)
 
     # 按鈕區域
     col1, col2 = st.columns(2)
