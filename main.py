@@ -271,8 +271,9 @@ if analyze_button:
 # 顯示結果
 if st.session_state["analysis_result"]:
     st.markdown("### 📝 分析結果")
-    # 使用Streamlit的原生markdown顯示功能顯示結果
-    st.markdown(st.session_state["analysis_result"])
+    # 只顯示一次分析結果
+    with st.container():
+        st.markdown(st.session_state["analysis_result"])
 
     # 建立可下載的 Markdown 檔案
     def get_markdown_download_link(markdown_text):
