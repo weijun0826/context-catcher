@@ -20,11 +20,23 @@ except Exception as e:
 # 只有在成功導入 openai 庫時才初始化客戶端
 if openai_import_error is None and api_key:
     try:
+        # 顯示 OpenAI 庫版本，幫助診斷問題
+        st.sidebar.info(f"OpenAI 庫版本: {openai.__version__}")
+
+        # 使用最簡單的方式初始化客戶端，只傳入 API key
         client = openai.OpenAI(api_key=api_key)
         st.sidebar.success("API key 已載入且 OpenAI 客戶端已初始化")
     except Exception as e:
         st.sidebar.error(f"初始化 OpenAI 客戶端時出錯: {e}")
-        client = None
+        # 嘗試使用舊版 API 初始化方式
+        try:
+            st.sidebar.warning("嘗試使用替代方法初始化 OpenAI 客戶端...")
+            openai.api_key = api_key  # 直接設置 API key
+            client = openai.Client()  # 不傳入任何參數
+            st.sidebar.success("使用替代方法成功初始化 OpenAI 客戶端")
+        except Exception as e2:
+            st.sidebar.error(f"替代初始化方法也失敗: {e2}")
+            client = None
 else:
     client = None
     if not openai_import_error:
@@ -60,14 +72,39 @@ if st.button("分析對話紀錄"):
 {chat_input}
 """
             try:
-                # 使用新版 OpenAI 客戶端
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",  # 使用 gpt-3.5-turbo 替代 gpt-4，因為 gpt-4 可能需要特殊權限
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    max_tokens=800,
-                )
-                output = response.choices[0].message.content
+                # 使用安全的方式調用 OpenAI API
+                st.info("正在調用 OpenAI API...")
+
+                # 定義通用參數
+                model = "gpt-3.5-turbo"
+                messages = [{"role": "user", "content": prompt}]
+                temperature = 0.3
+                max_tokens = 800
+
+                try:
+                    # 嘗試使用新版 API
+                    response = client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    output = response.choices[0].message.content
+                except AttributeError:
+                    # 如果新版 API 失敗，嘗試使用舊版 API
+                    st.warning("使用替代 API 調用方法...")
+                    try:
+                        # 嘗試使用舊版 API 格式
+                        response = openai.ChatCompletion.create(
+                            model=model,
+                            messages=messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                        )
+                        output = response.choices[0].message.content
+                    except Exception as e3:
+                        raise Exception(f"新舊 API 調用方法都失敗: {e3}")
+
                 st.markdown("### 📝 分析結果")
                 st.markdown(output)
 
@@ -77,3 +114,4 @@ if st.button("分析對話紀錄"):
             except Exception as e:
                 st.error(f"發生錯誤：{e}")
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
+                st.error(f"詳細錯誤信息: {str(e)}")
