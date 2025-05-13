@@ -271,7 +271,7 @@ if analyze_button:
 # 顯示結果
 if st.session_state["analysis_result"]:
     st.markdown("### 📝 分析結果")
-    st.markdown(st.session_state["analysis_result"])
+    # 結果將在下方顯示，不需要在這裡重複顯示
 
     # 建立可下載的 Markdown 檔案
     def get_markdown_download_link(markdown_text):
@@ -284,49 +284,85 @@ if st.session_state["analysis_result"]:
     # 創建一個JavaScript函數來複製文本到剪貼簿
     copy_js = """
     <script>
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                // 顯示成功訊息
-                const successMsg = document.createElement('div');
-                successMsg.textContent = '✅ 已複製到剪貼簿';
-                successMsg.style.position = 'fixed';
-                successMsg.style.top = '20px';
-                successMsg.style.left = '50%';
-                successMsg.style.transform = 'translateX(-50%)';
-                successMsg.style.padding = '10px 20px';
-                successMsg.style.backgroundColor = '#4CAF50';
-                successMsg.style.color = 'white';
-                successMsg.style.borderRadius = '5px';
-                successMsg.style.zIndex = '9999';
-                document.body.appendChild(successMsg);
+    // 創建一個隱藏的文本區域來複製文本
+    function copyTextToClipboard(text) {
+        // 創建臨時元素
+        var textArea = document.createElement("textarea");
+        textArea.value = text;
 
-                // 2秒後移除訊息
-                setTimeout(() => {
-                    document.body.removeChild(successMsg);
-                }, 2000);
-            })
-            .catch(err => {
-                console.error('無法複製文本: ', err);
-                alert('複製失敗，請手動選取文本並複製');
-            });
+        // 設置樣式使其不可見
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+
+        // 選中並複製
+        textArea.focus();
+        textArea.select();
+
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+        } catch(err) {
+            console.error('無法複製文本: ', err);
+        }
+
+        // 移除臨時元素
+        document.body.removeChild(textArea);
+
+        if (successful) {
+            // 顯示成功訊息
+            const successMsg = document.createElement('div');
+            successMsg.textContent = '✅ 已複製到剪貼簿';
+            successMsg.style.position = 'fixed';
+            successMsg.style.top = '20px';
+            successMsg.style.left = '50%';
+            successMsg.style.transform = 'translateX(-50%)';
+            successMsg.style.padding = '10px 20px';
+            successMsg.style.backgroundColor = '#4CAF50';
+            successMsg.style.color = 'white';
+            successMsg.style.borderRadius = '5px';
+            successMsg.style.zIndex = '9999';
+            document.body.appendChild(successMsg);
+
+            // 2秒後移除訊息
+            setTimeout(() => {
+                document.body.removeChild(successMsg);
+            }, 2000);
+        } else {
+            alert('複製失敗，請手動選取文本並複製');
+        }
+
+        return successful;
     }
     </script>
     """
 
+    # 創建一個div來顯示分析結果
+    result_id = "analysis_result_" + str(hash(st.session_state["analysis_result"]))
+    result_div = f"""
+    <div id="{result_id}" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+    {st.session_state["analysis_result"]}
+    </div>
+    """
+
     # 創建複製按鈕
     copy_button_html = f"""
-    <button onclick="copyToClipboard(`{st.session_state['analysis_result'].replace('`', '\\`')}`);"
+    <button onclick="copyTextToClipboard(document.getElementById('{result_id}').innerText);"
             style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
         📋 複製到剪貼簿
     </button>
     """
 
+    # 顯示分析結果
+    st.markdown(copy_js + result_div, unsafe_allow_html=True)
+
+    # 按鈕區域
     col1, col2 = st.columns(2)
 
     with col1:
         # 複製到剪貼簿按鈕
-        st.markdown(copy_js + copy_button_html, unsafe_allow_html=True)
+        st.markdown(copy_button_html, unsafe_allow_html=True)
 
     with col2:
         # 下載 Markdown 按鈕
