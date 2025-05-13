@@ -281,17 +281,52 @@ if st.session_state["analysis_result"]:
         href = f'<a href="data:file/markdown;base64,{b64}" download="{filename}" class="download-btn">下載 Markdown 檔案</a>'
         return href
 
+    # 創建一個JavaScript函數來複製文本到剪貼簿
+    copy_js = """
+    <script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                // 顯示成功訊息
+                const successMsg = document.createElement('div');
+                successMsg.textContent = '✅ 已複製到剪貼簿';
+                successMsg.style.position = 'fixed';
+                successMsg.style.top = '20px';
+                successMsg.style.left = '50%';
+                successMsg.style.transform = 'translateX(-50%)';
+                successMsg.style.padding = '10px 20px';
+                successMsg.style.backgroundColor = '#4CAF50';
+                successMsg.style.color = 'white';
+                successMsg.style.borderRadius = '5px';
+                successMsg.style.zIndex = '9999';
+                document.body.appendChild(successMsg);
+
+                // 2秒後移除訊息
+                setTimeout(() => {
+                    document.body.removeChild(successMsg);
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('無法複製文本: ', err);
+                alert('複製失敗，請手動選取文本並複製');
+            });
+    }
+    </script>
+    """
+
+    # 創建複製按鈕
+    copy_button_html = f"""
+    <button onclick="copyToClipboard(`{st.session_state['analysis_result'].replace('`', '\\`')}`);"
+            style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
+        📋 複製到剪貼簿
+    </button>
+    """
+
     col1, col2 = st.columns(2)
 
     with col1:
         # 複製到剪貼簿按鈕
-        st.download_button(
-            label="📋 複製到剪貼簿",
-            data=st.session_state["analysis_result"],
-            file_name="context_catcher_result.md",
-            mime="text/markdown",
-            use_container_width=True
-        )
+        st.markdown(copy_js + copy_button_html, unsafe_allow_html=True)
 
     with col2:
         # 下載 Markdown 按鈕
