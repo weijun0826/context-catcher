@@ -166,27 +166,16 @@ with st.sidebar:
     st.write("2. 點擊「分析對話紀錄」按鈕")
     st.write("3. 獲取摘要和任務清單")
 
-    # 加入反饋按鈕
+    # 加入反饋按鈕 - 使用真實的 Google 表單連結
     st.markdown("### 我們需要您的意見！")
     st.markdown("""
-    <a href="mailto:feedback@contextcatcher.com?subject=Context%20Catcher%20反饋" target="_blank" class="feedback-btn">
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?usp=header" target="_blank" class="feedback-btn">
         🎯 提供反饋
     </a>
     """, unsafe_allow_html=True)
 
-    # 簡單的內嵌反饋表單
-    with st.expander("在此留下您的反饋"):
-        feedback_name = st.text_input("您的名字（選填）")
-        feedback_email = st.text_input("您的電子郵件（選填）")
-        feedback_rating = st.slider("您對 Context Catcher 的評分", 1, 5, 3)
-        feedback_text = st.text_area("您的反饋或建議")
-
-        if st.button("提交反饋"):
-            if feedback_text:
-                st.success("感謝您的反饋！我們會認真考慮您的建議。")
-                # 這裡可以添加代碼來保存反饋，例如發送電子郵件或保存到數據庫
-            else:
-                st.warning("請輸入反饋內容")
+    # 添加說明文字
+    st.caption("點擊上方按鈕，在 Google 表單中提供您的寶貴意見")
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
