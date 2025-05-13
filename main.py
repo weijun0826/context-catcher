@@ -183,30 +183,52 @@ with st.sidebar:
 # 主要內容區域
 col1, col2 = st.columns([2, 1])
 
+# 定義一個回調函數來更新對話輸入
+def update_chat_input():
+    st.session_state.chat_input = example_conversations[st.session_state.selected_example]
+
 with col1:
-    # 輸入區域
-    chat_input = st.text_area("請貼上你的對話紀錄", height=300)
+    # 輸入區域 - 使用會話狀態
+    chat_input = st.text_area("請貼上你的對話紀錄",
+                              value=st.session_state.chat_input,
+                              height=300,
+                              key="chat_input_area")
 
 with col2:
     st.subheader("範例對話")
-    selected_example = st.selectbox("選擇一個範例", list(example_conversations.keys()))
-    if st.button("一鍵貼上範例"):
-        chat_input = example_conversations[selected_example]
+
+    # 使用會話狀態存儲選擇的範例
+    if "selected_example" not in st.session_state:
+        st.session_state.selected_example = list(example_conversations.keys())[0]
+
+    # 選擇範例下拉框
+    selected_example = st.selectbox(
+        "選擇一個範例",
+        list(example_conversations.keys()),
+        key="selected_example"
+    )
+
+    # 一鍵貼上範例按鈕
+    if st.button("一鍵貼上範例", on_click=update_chat_input):
         st.success("範例已貼上，請點擊「分析對話紀錄」按鈕進行分析")
 
 # 控制按鈕區域
 analyze_button = st.button("🔍 分析對話紀錄", use_container_width=True)
 
-# 結果區域
+# 初始化會話狀態
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
+
+# 初始化對話輸入的會話狀態
+if "chat_input" not in st.session_state:
+    st.session_state.chat_input = ""
 
 if analyze_button:
     # 檢查 API key 是否可用
     if not api_key:
         st.error("⚠️ 未找到 API key，請確保已在 Streamlit Secrets 中設置 OPENAI_API_KEY。")
     # 檢查輸入是否為空
-    elif not chat_input.strip():
+    elif not st.session_state.chat_input.strip():
         st.warning("⚠️ 請先輸入對話紀錄或選擇一個範例。")
     else:
         with st.spinner("🤖 AI 正在理解對話內容中..."):
@@ -223,7 +245,7 @@ if analyze_button:
 2. 待辦事項清單（格式為：- [ ] 任務名稱 - 負責人（如有） - 截止日（如有））
 
 對話紀錄：
-{chat_input}
+{st.session_state.chat_input}
 """
             # 使用我們的自定義函數調用 OpenAI API
             output = call_openai_api(prompt)
