@@ -14,6 +14,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize session state variables
+if "analysis_result" not in st.session_state:
+    st.session_state["analysis_result"] = None
+
+if "chat_input" not in st.session_state:
+    st.session_state["chat_input"] = ""
+
+if "selected_example" not in st.session_state:
+    st.session_state["selected_example"] = "團隊會議摘要"  # Default to first example
+
 # Custom CSS for better mobile experience
 st.markdown("""
 <style>
@@ -185,14 +195,18 @@ col1, col2 = st.columns([2, 1])
 
 # 定義一個回調函數來更新對話輸入
 def update_chat_input():
-    st.session_state["chat_input"] = example_conversations[st.session_state["selected_example"]]
+    # 直接更新文本區域的值
+    st.session_state["chat_input_area"] = example_conversations[st.session_state["selected_example"]]
 
 with col1:
-    # 輸入區域 - 使用會話狀態
+    # 輸入區域 - 不直接使用會話狀態作為初始值
     chat_input = st.text_area("請貼上你的對話紀錄",
-                              value=st.session_state["chat_input"],
+                              value="",  # Start with empty string instead of session_state
                               height=300,
                               key="chat_input_area")
+
+    # Update session state after the widget is rendered
+    st.session_state["chat_input"] = chat_input
 
 with col2:
     st.subheader("範例對話")
@@ -206,29 +220,27 @@ with col2:
 
     # 一鍵貼上範例按鈕
     if st.button("一鍵貼上範例", on_click=update_chat_input):
+        # 顯示成功訊息
         st.success("範例已貼上，請點擊「分析對話紀錄」按鈕進行分析")
+        # 確保 chat_input 變數也被更新
+        chat_input = example_conversations[st.session_state["selected_example"]]
 
 # 控制按鈕區域
 analyze_button = st.button("🔍 分析對話紀錄", use_container_width=True)
 
-# 初始化會話狀態 - 確保在腳本開始時就初始化所有會話狀態變量
-if "analysis_result" not in st.session_state:
-    st.session_state["analysis_result"] = None
-
-if "chat_input" not in st.session_state:
-    st.session_state["chat_input"] = ""
-
-if "selected_example" not in st.session_state:
-    st.session_state["selected_example"] = list(example_conversations.keys())[0]
+# Session state variables are already initialized at the top of the script
 
 if analyze_button:
     # 檢查 API key 是否可用
     if not api_key:
         st.error("⚠️ 未找到 API key，請確保已在 Streamlit Secrets 中設置 OPENAI_API_KEY。")
     # 檢查輸入是否為空
-    elif not st.session_state["chat_input"].strip():
+    elif not chat_input.strip():
         st.warning("⚠️ 請先輸入對話紀錄或選擇一個範例。")
     else:
+        # 確保 session_state 中有最新的輸入值
+        st.session_state["chat_input"] = chat_input
+
         with st.spinner("🤖 AI 正在理解對話內容中..."):
             # 顯示進度條
             progress_bar = st.progress(0)
@@ -243,7 +255,7 @@ if analyze_button:
 2. 待辦事項清單（格式為：- [ ] 任務名稱 - 負責人（如有） - 截止日（如有））
 
 對話紀錄：
-{st.session_state["chat_input"]}
+{chat_input}
 """
             # 使用我們的自定義函數調用 OpenAI API
             output = call_openai_api(prompt)
