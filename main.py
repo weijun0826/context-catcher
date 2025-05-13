@@ -166,16 +166,15 @@ with st.sidebar:
     st.write("2. 點擊「分析對話紀錄」按鈕")
     st.write("3. 獲取摘要和任務清單")
 
-    # 加入反饋按鈕 - 使用自定義表單模板
+    # 加入反饋按鈕 - 使用多頁應用
     st.markdown("### 我們需要您的意見！")
-    st.markdown("""
-    <a href="feedback_form_template.html" target="_blank" class="feedback-btn">
-        🎯 提供反饋
-    </a>
-    """, unsafe_allow_html=True)
+
+    # 添加反饋按鈕
+    if st.button("🎯 提供反饋", use_container_width=True):
+        st.switch_page("pages/feedback.py")
 
     # 添加說明文字
-    st.caption("點擊上方按鈕，在表單中提供您的寶貴意見")
+    st.caption("您的反饋對我們非常重要，感謝您的寶貴意見！")
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
