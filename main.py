@@ -185,21 +185,17 @@ col1, col2 = st.columns([2, 1])
 
 # 定義一個回調函數來更新對話輸入
 def update_chat_input():
-    st.session_state.chat_input = example_conversations[st.session_state.selected_example]
+    st.session_state["chat_input"] = example_conversations[st.session_state["selected_example"]]
 
 with col1:
     # 輸入區域 - 使用會話狀態
     chat_input = st.text_area("請貼上你的對話紀錄",
-                              value=st.session_state.chat_input,
+                              value=st.session_state["chat_input"],
                               height=300,
                               key="chat_input_area")
 
 with col2:
     st.subheader("範例對話")
-
-    # 使用會話狀態存儲選擇的範例
-    if "selected_example" not in st.session_state:
-        st.session_state.selected_example = list(example_conversations.keys())[0]
 
     # 選擇範例下拉框
     selected_example = st.selectbox(
@@ -215,20 +211,22 @@ with col2:
 # 控制按鈕區域
 analyze_button = st.button("🔍 分析對話紀錄", use_container_width=True)
 
-# 初始化會話狀態
+# 初始化會話狀態 - 確保在腳本開始時就初始化所有會話狀態變量
 if "analysis_result" not in st.session_state:
-    st.session_state.analysis_result = None
+    st.session_state["analysis_result"] = None
 
-# 初始化對話輸入的會話狀態
 if "chat_input" not in st.session_state:
-    st.session_state.chat_input = ""
+    st.session_state["chat_input"] = ""
+
+if "selected_example" not in st.session_state:
+    st.session_state["selected_example"] = list(example_conversations.keys())[0]
 
 if analyze_button:
     # 檢查 API key 是否可用
     if not api_key:
         st.error("⚠️ 未找到 API key，請確保已在 Streamlit Secrets 中設置 OPENAI_API_KEY。")
     # 檢查輸入是否為空
-    elif not st.session_state.chat_input.strip():
+    elif not st.session_state["chat_input"].strip():
         st.warning("⚠️ 請先輸入對話紀錄或選擇一個範例。")
     else:
         with st.spinner("🤖 AI 正在理解對話內容中..."):
@@ -245,7 +243,7 @@ if analyze_button:
 2. 待辦事項清單（格式為：- [ ] 任務名稱 - 負責人（如有） - 截止日（如有））
 
 對話紀錄：
-{st.session_state.chat_input}
+{st.session_state["chat_input"]}
 """
             # 使用我們的自定義函數調用 OpenAI API
             output = call_openai_api(prompt)
@@ -255,13 +253,13 @@ if analyze_button:
                 st.error(f"⚠️ {output}")
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
-                st.session_state.analysis_result = output
+                st.session_state["analysis_result"] = output
                 st.success("✅ 分析完成！")
 
 # 顯示結果
-if st.session_state.analysis_result:
+if st.session_state["analysis_result"]:
     st.markdown("### 📝 分析結果")
-    st.markdown(st.session_state.analysis_result)
+    st.markdown(st.session_state["analysis_result"])
 
     # 建立可下載的 Markdown 檔案
     def get_markdown_download_link(markdown_text):
@@ -277,7 +275,7 @@ if st.session_state.analysis_result:
         # 複製到剪貼簿按鈕
         st.download_button(
             label="📋 複製到剪貼簿",
-            data=st.session_state.analysis_result,
+            data=st.session_state["analysis_result"],
             file_name="context_catcher_result.md",
             mime="text/markdown",
             use_container_width=True
@@ -286,6 +284,6 @@ if st.session_state.analysis_result:
     with col2:
         # 下載 Markdown 按鈕
         st.markdown(
-            get_markdown_download_link(st.session_state.analysis_result),
+            get_markdown_download_link(st.session_state["analysis_result"]),
             unsafe_allow_html=True
         )
