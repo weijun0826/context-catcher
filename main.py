@@ -166,16 +166,25 @@ with st.sidebar:
     st.write("2. 點擊「分析對話紀錄」按鈕")
     st.write("3. 獲取摘要和任務清單")
 
-    # 加入反饋按鈕 - 使用真實的 Google 表單連結
+    # 加入反饋表單 - 直接嵌入 Google 表單
     st.markdown("### 我們需要您的意見！")
-    st.markdown("""
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?usp=header" target="_blank" class="feedback-btn">
-        🎯 提供反饋
-    </a>
-    """, unsafe_allow_html=True)
 
-    # 添加說明文字
-    st.caption("點擊上方按鈕，在 Google 表單中提供您的寶貴意見")
+    # 使用 expander 來節省空間
+    with st.expander("點擊這裡填寫反饋表單"):
+        # 嵌入 Google 表單
+        st.markdown("""
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?embedded=true"
+                width="100%"
+                height="600"
+                frameborder="0"
+                marginheight="0"
+                marginwidth="0">
+            載入中…
+        </iframe>
+        """, unsafe_allow_html=True)
+
+    # 添加外部連結作為備選
+    st.caption("如果表單無法正常顯示，您也可以[點擊這裡](https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?usp=header)在新視窗中打開表單。")
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
