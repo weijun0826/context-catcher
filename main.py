@@ -308,12 +308,27 @@ if analyze_button:
                 progress_bar.progress(i + 1)
 
             prompt = f"""
-你是一個任務整理助理，請根據以下對話紀錄進行分析，產出：
+你是一個高效的AI分析助手，專門處理文字輸入並提取核心資訊。
 
-1. 一段簡潔摘要（約 3-5 行）
-2. 待辦事項清單（格式為：- [ ] 任務名稱 - 負責人（如有） - 截止日（如有））
+請根據以下文字內容進行分析：
 
-對話紀錄：
+1. 讀取輸入的文字內容，分析並提取出最重要的資訊與重點，生成簡明摘要。
+2. 從文字中識別可執行的工作項目或後續行動事項，列成清單格式的待辦事項。
+3. 最後，請將摘要與待辦事項整理成 **Markdown 格式** 輸出，結構清晰、易於閱讀與複製使用。
+
+請使用以下格式輸出：
+
+## 📌 Summary
+- 重點1
+- 重點2
+- 重點3
+
+## ✅ To-Do List
+- [ ] 工作項目1
+- [ ] 工作項目2
+- [ ] 工作項目3
+
+文字內容：
 {chat_input}
 """
             # 使用我們的自定義函數調用 OpenAI API
@@ -333,6 +348,115 @@ if st.session_state["analysis_result"]:
     # 獲取分析結果文本
     result_text = st.session_state["analysis_result"]
 
-    # 在這裡添加您的新代碼來顯示分析結果
+    # 顯示分析結果
     st.markdown("### 📝 分析結果")
-    st.markdown("分析結果顯示部分已移除，請添加您的新代碼。")
+
+    # 使用 st.empty() 創建一個容器，確保內容只顯示一次
+    result_container = st.empty()
+
+    # 在容器中顯示 Markdown 格式的分析結果
+    with result_container:
+        st.markdown(result_text)
+
+    # 創建一個JavaScript函數來複製文本到剪貼簿 (使用現代 Clipboard API)
+    copy_js = """
+    <script>
+    // 複製文本到剪貼簿的函數
+    function copyTextToClipboard(text) {
+        // 使用現代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showCopySuccessMessage();
+                })
+                .catch(err => {
+                    console.error('無法複製文本: ', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+        } else {
+            // 如果 Clipboard API 不可用，使用備用方法
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    // 備用的複製方法 (針對不支援 Clipboard API 的瀏覽器)
+    function fallbackCopyTextToClipboard(text) {
+        // 創建臨時元素
+        var textArea = document.createElement("textarea");
+        textArea.value = text;
+
+        // 設置樣式使其不可見
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+
+        // 選中並複製
+        textArea.focus();
+        textArea.select();
+
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccessMessage();
+            } else {
+                alert('複製失敗，請手動選取文本並複製');
+            }
+        } catch(err) {
+            console.error('無法複製文本: ', err);
+            alert('複製失敗，請手動選取文本並複製');
+        }
+
+        // 移除臨時元素
+        document.body.removeChild(textArea);
+    }
+
+    // 顯示複製成功訊息
+    function showCopySuccessMessage() {
+        // 檢查是否已經有訊息顯示
+        var existingMsg = document.getElementById('copy-success-message');
+        if (existingMsg) {
+            document.body.removeChild(existingMsg);
+        }
+
+        // 顯示成功訊息
+        const successMsg = document.createElement('div');
+        successMsg.id = 'copy-success-message';
+        successMsg.textContent = '✅ 已複製到剪貼簿';
+        successMsg.style.position = 'fixed';
+        successMsg.style.top = '20px';
+        successMsg.style.left = '50%';
+        successMsg.style.transform = 'translateX(-50%)';
+        successMsg.style.padding = '10px 20px';
+        successMsg.style.backgroundColor = '#4CAF50';
+        successMsg.style.color = 'white';
+        successMsg.style.borderRadius = '5px';
+        successMsg.style.zIndex = '9999';
+        successMsg.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        document.body.appendChild(successMsg);
+
+        // 2秒後移除訊息
+        setTimeout(() => {
+            if (document.body.contains(successMsg)) {
+                document.body.removeChild(successMsg);
+            }
+        }, 2000);
+    }
+    </script>
+    """
+
+    # 創建一個完整的 HTML 結構，包含 JavaScript、隱藏的文本區域和按鈕
+    complete_html = f"""
+    {copy_js}
+    <div class="copy-container">
+        <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{result_text}</textarea>
+        <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
+                style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
+            📋 複製分析結果到剪貼簿
+        </button>
+    </div>
+    """
+
+    # 一次性顯示所有 HTML 內容
+    st.markdown(complete_html, unsafe_allow_html=True)
