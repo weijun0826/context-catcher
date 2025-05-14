@@ -333,6 +333,11 @@ if st.session_state["analysis_result"]:
     # 獲取分析結果文本
     result_text = st.session_state["analysis_result"]
 
+    # 嘗試分離摘要和待辦事項
+    parts = result_text.split("待辦事項清單：" if "待辦事項清單：" in result_text else "2.")
+    summary = parts[0].strip()
+    todo_list = parts[1].strip() if len(parts) > 1 else result_text
+
     # 顯示標題
     st.markdown("### 📝 分析結果")
 
@@ -431,15 +436,26 @@ if st.session_state["analysis_result"]:
     </script>
     """
 
+    # 顯示待辦事項的 Markdown 文字內容
+    st.markdown("### 📋 待辦事項 Markdown 文字")
+
+    # 創建一個帶有樣式的文本區域來顯示 Markdown 內容
+    markdown_display = f"""
+    <div style="background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 15px; font-family: monospace; white-space: pre-wrap;">
+    {todo_list}
+    </div>
+    """
+
     # 創建一個完整的 HTML 結構，包含 JavaScript、隱藏的文本區域和按鈕
     complete_html = f"""
     {copy_js}
     <div class="copy-container">
-        <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{result_text}</textarea>
+        <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{todo_list}</textarea>
         <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
                 style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
-            📋 複製分析結果到剪貼簿
+            📋 複製待辦事項到剪貼簿
         </button>
+        {markdown_display}
     </div>
     """
 
