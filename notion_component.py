@@ -60,15 +60,15 @@ def render_notion_section(ui_text, analysis_result=None):
                 else:
                     st.error(f"{ui_text['notion_connection_failed']}: {result.get('message', '')}")
 
-        # Setup instructions in a nested expander
-        with st.expander(ui_text["notion_setup_instructions"]):
-            st.markdown("""
-            1. Create a Notion integration at https://www.notion.so/my-integrations
-            2. Get your API key from the integration page
-            3. Create a database in Notion where you want to save your analysis results
-            4. Share the database with your integration (click "Share" in Notion and add your integration)
-            5. Copy the database ID from the URL (it's the part after the workspace name and before the question mark)
-            """)
+        # Setup instructions
+        st.markdown(f"**{ui_text['notion_setup_instructions']}:**")
+        st.markdown("""
+        1. Create a Notion integration at https://www.notion.so/my-integrations
+        2. Get your API key from the integration page
+        3. Create a database in Notion where you want to save your analysis results
+        4. Share the database with your integration (click "Share" in Notion and add your integration)
+        5. Copy the database ID from the URL (it's the part after the workspace name and before the question mark)
+        """)
 
         # Check if credentials are already set in secrets
         has_api_key = bool(credentials.get("api_key"))
