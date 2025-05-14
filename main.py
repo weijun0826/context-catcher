@@ -3,6 +3,7 @@ import os
 import requests
 import json
 import time
+from notion_component import render_notion_section
 
 # Page configuration
 st.set_page_config(
@@ -44,7 +45,23 @@ ui_text = {
         "copy_success": "✅ 已複製到剪貼簿",
         "copy_fail": "複製失敗，請手動選取文本並複製",
         "prompt_summary": "## 📌 摘要",
-        "prompt_todo": "## ✅ 待辦事項清單"
+        "prompt_todo": "## ✅ 待辦事項清單",
+        "notion_section_title": "匯出到 Notion",
+        "notion_description": "將分析結果直接發送到 Notion",
+        "notion_api_key_label": "Notion API Key",
+        "notion_database_id_label": "Notion 資料庫 ID",
+        "notion_title_label": "頁面標題",
+        "notion_send_button": "發送到 Notion",
+        "notion_test_connection": "測試連接",
+        "notion_connection_success": "✅ 已連接到 Notion",
+        "notion_connection_failed": "❌ 連接失敗",
+        "notion_send_success": "✅ 已成功發送到 Notion",
+        "notion_send_failed": "❌ 發送到 Notion 失敗",
+        "notion_view_in_notion": "在 Notion 中查看",
+        "notion_no_analysis": "請先分析對話",
+        "notion_api_key_help": "您可以從 https://www.notion.so/my-integrations 獲取 API key",
+        "notion_database_id_help": "您想要保存分析結果的資料庫 ID",
+        "notion_setup_instructions": "如何設置 Notion 集成"
     },
     "English": {
         "title": "Context Catcher",
@@ -76,7 +93,23 @@ ui_text = {
         "copy_success": "✅ Copied to clipboard",
         "copy_fail": "Copy failed, please manually select and copy the text",
         "prompt_summary": "## 📌 Summary",
-        "prompt_todo": "## ✅ To-Do List"
+        "prompt_todo": "## ✅ To-Do List",
+        "notion_section_title": "Export to Notion",
+        "notion_description": "Send your analysis results directly to Notion",
+        "notion_api_key_label": "Notion API Key",
+        "notion_database_id_label": "Notion Database ID",
+        "notion_title_label": "Page Title",
+        "notion_send_button": "Send to Notion",
+        "notion_test_connection": "Test Connection",
+        "notion_connection_success": "✅ Connected to Notion",
+        "notion_connection_failed": "❌ Connection failed",
+        "notion_send_success": "✅ Successfully sent to Notion",
+        "notion_send_failed": "❌ Failed to send to Notion",
+        "notion_view_in_notion": "View in Notion",
+        "notion_no_analysis": "Please analyze a conversation first",
+        "notion_api_key_help": "You can get your API key from https://www.notion.so/my-integrations",
+        "notion_database_id_help": "The ID of the database where you want to save the analysis",
+        "notion_setup_instructions": "How to set up Notion integration"
     }
 }
 
@@ -331,22 +364,24 @@ PM: Good, we'll ensure the registration process optimization is completed by the
 
 # This section was moved to the top of the file
 
+# Create a callback for language change
+def on_language_change():
+    # Force a rerun of the app when language changes
+    st.rerun()
+
 # 側邊欄功能
 with st.sidebar:
-    # 語言選擇 - 使用 session_state 來檢測語言變化
-    previous_language = st.session_state.get("language", "中文")
-
+    # 語言選擇
     selected_language = st.selectbox(
         "選擇語言 / Select Language",
         ["中文", "English"],
-        index=0 if previous_language == "中文" else 1,
-        key="language_selector"
+        index=0 if st.session_state["language"] == "中文" else 1,
+        key="language_selector",
+        on_change=on_language_change
     )
 
-    # 檢查語言是否變化，如果變化了，更新 session state 並重新運行
-    if selected_language != previous_language:
-        st.session_state["language"] = selected_language
-        st.rerun()
+    # 更新 session state 中的語言設置
+    st.session_state["language"] = selected_language
 
     # 獲取當前語言的文字
     current_text = ui_text[selected_language]
@@ -528,3 +563,6 @@ if st.session_state["analysis_result"]:
 
     # 使用 st.code 顯示分析結果，這樣用戶可以直接選擇和複製
     st.code(result_text, language="markdown")
+
+    # 添加 Notion 集成部分
+    render_notion_section(current_text, result_text)

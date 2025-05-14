@@ -11,6 +11,7 @@ Context Catcher 是一個基於 OpenAI API 的 Streamlit 應用程序，能夠�
 - **任務清單**：自動提取對話中的任務項目，包含負責人和截止日期
 - **一鍵範例**：提供範例對話快速體驗功能
 - **匯出功能**：支持複製或下載 Markdown 格式的結果
+- **Notion 整合**：將分析結果直接匯出到 Notion 資料庫
 - **移動端優化**：響應式設計，在手機上也能舒適使用
 - **使用者反饋**：整合 Google Form 收集用戶意見
 
@@ -19,6 +20,7 @@ Context Catcher 是一個基於 OpenAI API 的 Streamlit 應用程序，能夠�
 - Python 3.7+
 - OpenAI API Key
 - Streamlit 1.0.0+
+- Notion API Key (可選，用於 Notion 整合功能)
 
 ## 🛠️ 安裝與設置
 
@@ -37,10 +39,17 @@ pip install -r requirements.txt
 
 3. **設置 API Key**
 
-創建 `.env` 文件，添加你的 OpenAI API Key：
+創建 `.env` 文件，添加你的 API Keys：
 
 ```
+# OpenAI API Key
 OPENAI_API_KEY=your_api_key_here
+
+# Notion API Key (可選)
+NOTION_API_KEY=your_notion_api_key_here
+
+# Notion Database ID (可選)
+NOTION_DATABASE_ID=your_notion_database_id_here
 ```
 
 或在 Streamlit Cloud 中添加到 Secrets 中。
@@ -62,7 +71,7 @@ streamlit run landing_page.py
 1. 在文本框中貼上對話記錄，或使用「一鍵貼上範例」按鈕選擇預設範例
 2. 點擊「分析對話紀錄」按鈕
 3. 查看生成的摘要和任務清單
-4. 複製或下載分析結果
+4. 複製分析結果或將其匯出到 Notion
 
 ## 📸 創建 Demo GIF
 
@@ -100,6 +109,8 @@ context-catcher/
 ├── .env                     # API Key 環境變量（未包含在 Git 中）
 ├── .gitignore               # Git 忽略文件
 ├── main.py                  # 主要應用代碼
+├── notion_integration.py    # Notion API 整合工具
+├── notion_component.py      # Notion UI 組件
 ├── landing_page.py          # 着陸頁面
 ├── demo_gif_creator.py      # Demo GIF 創建腳本
 ├── feedback_form_template.html # Google Form 反饋表單模板
@@ -130,9 +141,10 @@ python check_account.py
 
 ## 📋 後續開發計劃
 
-- [ ] 多語言支持
+- [x] 多語言支持
+- [x] Notion 整合功能
 - [ ] 自定義提示詞選項
-- [ ] 集成到日曆和任務管理工具
+- [ ] 集成到其他任務管理工具
 - [ ] 文件上傳分析功能
 - [ ] 語音轉文字功能
 
