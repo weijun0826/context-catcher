@@ -331,24 +331,22 @@ PM: Good, we'll ensure the registration process optimization is completed by the
 
 # This section was moved to the top of the file
 
-# Create a callback for language change
-def on_language_change():
-    # Force a rerun of the app when language changes
-    st.rerun()
-
 # 側邊欄功能
 with st.sidebar:
-    # 語言選擇
+    # 語言選擇 - 使用 session_state 來檢測語言變化
+    previous_language = st.session_state.get("language", "中文")
+
     selected_language = st.selectbox(
         "選擇語言 / Select Language",
         ["中文", "English"],
-        index=0 if st.session_state["language"] == "中文" else 1,
-        key="language_selector",
-        on_change=on_language_change
+        index=0 if previous_language == "中文" else 1,
+        key="language_selector"
     )
 
-    # 更新 session state 中的語言設置
-    st.session_state["language"] = selected_language
+    # 檢查語言是否變化，如果變化了，更新 session state 並重新運行
+    if selected_language != previous_language:
+        st.session_state["language"] = selected_language
+        st.rerun()
 
     # 獲取當前語言的文字
     current_text = ui_text[selected_language]
