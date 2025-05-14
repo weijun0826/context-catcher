@@ -3,8 +3,6 @@ import os
 import requests
 import json
 import time
-import base64
-from datetime import datetime
 
 # Page configuration
 st.set_page_config(
@@ -23,6 +21,9 @@ if "chat_input" not in st.session_state:
 
 if "selected_example" not in st.session_state:
     st.session_state["selected_example"] = "團隊會議摘要"  # Default to first example
+
+if "result_displayed" not in st.session_state:
+    st.session_state["result_displayed"] = False
 
 # Custom CSS for better mobile experience
 st.markdown("""
@@ -71,6 +72,64 @@ st.markdown("""
     }
     .feedback-btn:hover {
         background-color: #e6e9ef;
+    }
+
+    /* Markdown dropdown styles */
+    .markdown-dropdown {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .markdown-dropdown-header {
+        background-color: #f7f7f7;
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .markdown-dropdown-content {
+        padding: 15px;
+        background-color: #fff;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* Copy button styles */
+    .copy-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 10px;
+    }
+
+    .copy-btn:hover {
+        background-color: #45a049;
+    }
+
+    /* Download button styles */
+    .download-btn {
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .download-btn:hover {
+        background-color: #0b7dda;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -266,28 +325,47 @@ if analyze_button:
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
                 st.session_state["analysis_result"] = output
+                st.session_state["result_displayed"] = False  # 重設顯示狀態
                 st.success("✅ 分析完成！")
 
 # 顯示結果
 if st.session_state["analysis_result"]:
+    # 獲取分析結果文本
+    result_text = st.session_state["analysis_result"]
+
+    # 顯示標題
     st.markdown("### 📝 分析結果")
-    # 只顯示一次分析結果
-    with st.container():
-        st.markdown(st.session_state["analysis_result"])
 
-    # 建立可下載的 Markdown 檔案
-    def get_markdown_download_link(markdown_text):
-        """產生可下載的 markdown 文件連結"""
-        b64 = base64.b64encode(markdown_text.encode()).decode()
-        filename = f"context_catcher_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        href = f'<a href="data:file/markdown;base64,{b64}" download="{filename}" class="download-btn">下載 Markdown 檔案</a>'
-        return href
+    # 使用 st.empty() 創建一個容器，確保內容只顯示一次
+    result_container = st.empty()
 
-    # 創建一個JavaScript函數來複製文本到剪貼簿
+    # 在容器中顯示 Markdown 格式的分析結果
+    with result_container:
+        st.markdown(result_text)
+
+    # 創建一個JavaScript函數來複製文本到剪貼簿 (使用現代 Clipboard API)
     copy_js = """
     <script>
-    // 創建一個隱藏的文本區域來複製文本
+    // 複製文本到剪貼簿的函數
     function copyTextToClipboard(text) {
+        // 使用現代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showCopySuccessMessage();
+                })
+                .catch(err => {
+                    console.error('無法複製文本: ', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+        } else {
+            // 如果 Clipboard API 不可用，使用備用方法
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    // 備用的複製方法 (針對不支援 Clipboard API 的瀏覽器)
+    function fallbackCopyTextToClipboard(text) {
         // 創建臨時元素
         var textArea = document.createElement("textarea");
         textArea.value = text;
@@ -305,69 +383,65 @@ if st.session_state["analysis_result"]:
         var successful = false;
         try {
             successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccessMessage();
+            } else {
+                alert('複製失敗，請手動選取文本並複製');
+            }
         } catch(err) {
             console.error('無法複製文本: ', err);
+            alert('複製失敗，請手動選取文本並複製');
         }
 
         // 移除臨時元素
         document.body.removeChild(textArea);
+    }
 
-        if (successful) {
-            // 顯示成功訊息
-            const successMsg = document.createElement('div');
-            successMsg.textContent = '✅ 已複製到剪貼簿';
-            successMsg.style.position = 'fixed';
-            successMsg.style.top = '20px';
-            successMsg.style.left = '50%';
-            successMsg.style.transform = 'translateX(-50%)';
-            successMsg.style.padding = '10px 20px';
-            successMsg.style.backgroundColor = '#4CAF50';
-            successMsg.style.color = 'white';
-            successMsg.style.borderRadius = '5px';
-            successMsg.style.zIndex = '9999';
-            document.body.appendChild(successMsg);
-
-            // 2秒後移除訊息
-            setTimeout(() => {
-                document.body.removeChild(successMsg);
-            }, 2000);
-        } else {
-            alert('複製失敗，請手動選取文本並複製');
+    // 顯示複製成功訊息
+    function showCopySuccessMessage() {
+        // 檢查是否已經有訊息顯示
+        var existingMsg = document.getElementById('copy-success-message');
+        if (existingMsg) {
+            document.body.removeChild(existingMsg);
         }
 
-        return successful;
+        // 顯示成功訊息
+        const successMsg = document.createElement('div');
+        successMsg.id = 'copy-success-message';
+        successMsg.textContent = '✅ 已複製到剪貼簿';
+        successMsg.style.position = 'fixed';
+        successMsg.style.top = '20px';
+        successMsg.style.left = '50%';
+        successMsg.style.transform = 'translateX(-50%)';
+        successMsg.style.padding = '10px 20px';
+        successMsg.style.backgroundColor = '#4CAF50';
+        successMsg.style.color = 'white';
+        successMsg.style.borderRadius = '5px';
+        successMsg.style.zIndex = '9999';
+        successMsg.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        document.body.appendChild(successMsg);
+
+        // 2秒後移除訊息
+        setTimeout(() => {
+            if (document.body.contains(successMsg)) {
+                document.body.removeChild(successMsg);
+            }
+        }, 2000);
     }
     </script>
     """
 
-    # 不需要額外的HTML顯示，因為我們已經使用Streamlit的原生markdown顯示功能
-
-    # 創建一個隱藏的textarea來存儲純文本格式的分析結果（用於複製）
-    copy_text_area = f"""
-    <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{st.session_state["analysis_result"]}</textarea>
+    # 創建一個完整的 HTML 結構，包含 JavaScript、隱藏的文本區域和按鈕
+    complete_html = f"""
+    {copy_js}
+    <div class="copy-container">
+        <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{result_text}</textarea>
+        <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
+                style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
+            📋 複製分析結果到剪貼簿
+        </button>
+    </div>
     """
 
-    # 創建複製按鈕
-    copy_button_html = f"""
-    <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
-            style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
-        📋 複製到剪貼簿
-    </button>
-    """
-
-    # 顯示JavaScript和隱藏的複製區域
-    st.markdown(copy_js + copy_text_area, unsafe_allow_html=True)
-
-    # 按鈕區域
-    col1, col2 = st.columns(2)
-
-    with col1:
-        # 複製到剪貼簿按鈕
-        st.markdown(copy_button_html, unsafe_allow_html=True)
-
-    with col2:
-        # 下載 Markdown 按鈕
-        st.markdown(
-            get_markdown_download_link(st.session_state["analysis_result"]),
-            unsafe_allow_html=True
-        )
+    # 一次性顯示所有 HTML 內容
+    st.markdown(complete_html, unsafe_allow_html=True)
