@@ -12,6 +12,74 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# 定義中英文界面文字
+ui_text = {
+    "中文": {
+        "title": "Context Catcher",
+        "subtitle": "自動摘要你的對話紀錄 & 任務清單產出",
+        "about_header": "關於 Context Catcher",
+        "about_text": "Context Catcher 幫助你自動分析會議記錄或對話內容，生成摘要和任務清單，讓你的工作更有效率。",
+        "usage_header": "使用說明",
+        "usage_step1": "1. 將對話記錄貼到輸入框中",
+        "usage_step2": "2. 點擊「分析對話紀錄」按鈕",
+        "usage_step3": "3. 獲取摘要和任務清單",
+        "feedback_header": "我們需要您的意見！",
+        "feedback_button": "🎯 提供反饋",
+        "feedback_caption": "點擊上方按鈕，在 Google 表單中提供您的寶貴意見",
+        "language_selector": "選擇語言",
+        "input_label": "請貼上你的對話紀錄",
+        "examples_header": "範例對話",
+        "examples_selector": "選擇一個範例",
+        "paste_example": "一鍵貼上範例",
+        "paste_success": "範例已貼上，請點擊「分析對話紀錄」按鈕進行分析",
+        "analyze_button": "🔍 分析對話紀錄",
+        "api_key_loaded": "API key 已載入",
+        "api_key_not_found": "未找到 API key",
+        "api_key_error": "無法獲取 API key: ",
+        "input_empty": "⚠️ 請先輸入對話紀錄或選擇一個範例。",
+        "analyzing": "🤖 AI 正在理解對話內容中...",
+        "analysis_complete": "✅ 分析完成！",
+        "analysis_result": "📝 分析結果",
+        "copy_button": "📋 複製分析結果到剪貼簿",
+        "copy_success": "✅ 已複製到剪貼簿",
+        "copy_fail": "複製失敗，請手動選取文本並複製",
+        "prompt_summary": "## 📌 摘要",
+        "prompt_todo": "## ✅ 待辦事項清單"
+    },
+    "English": {
+        "title": "Context Catcher",
+        "subtitle": "Automatically summarize your conversations & generate task lists",
+        "about_header": "About Context Catcher",
+        "about_text": "Context Catcher helps you automatically analyze meeting records or conversation content, generate summaries and task lists, making your work more efficient.",
+        "usage_header": "How to Use",
+        "usage_step1": "1. Paste your conversation record in the input box",
+        "usage_step2": "2. Click the 'Analyze Conversation' button",
+        "usage_step3": "3. Get summary and task list",
+        "feedback_header": "We Need Your Feedback!",
+        "feedback_button": "🎯 Provide Feedback",
+        "feedback_caption": "Click the button above to provide your valuable feedback in the Google Form",
+        "language_selector": "Select Language",
+        "input_label": "Please paste your conversation record",
+        "examples_header": "Example Conversations",
+        "examples_selector": "Select an example",
+        "paste_example": "Paste Example",
+        "paste_success": "Example pasted, please click the 'Analyze Conversation' button to analyze",
+        "analyze_button": "🔍 Analyze Conversation",
+        "api_key_loaded": "API key loaded",
+        "api_key_not_found": "API key not found",
+        "api_key_error": "Failed to get API key: ",
+        "input_empty": "⚠️ Please enter conversation record or select an example first.",
+        "analyzing": "🤖 AI is understanding the conversation content...",
+        "analysis_complete": "✅ Analysis complete!",
+        "analysis_result": "📝 Analysis Result",
+        "copy_button": "📋 Copy Analysis Result",
+        "copy_success": "✅ Copied to clipboard",
+        "copy_fail": "Copy failed, please manually select and copy the text",
+        "prompt_summary": "## 📌 Summary",
+        "prompt_todo": "## ✅ To-Do List"
+    }
+}
+
 # Initialize session state variables
 if "analysis_result" not in st.session_state:
     st.session_state["analysis_result"] = None
@@ -24,6 +92,9 @@ if "selected_example" not in st.session_state:
 
 if "result_displayed" not in st.session_state:
     st.session_state["result_displayed"] = False
+
+if "language" not in st.session_state:
+    st.session_state["language"] = "中文"  # 默認語言為中文
 
 # Custom CSS for better mobile experience
 st.markdown("""
@@ -134,19 +205,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# 獲取當前語言的文字
+current_text = ui_text[st.session_state["language"]]
+
 # 設定頁面標題和描述
-st.title("🧠 Context Catcher")
-st.subheader("自動摘要你的對話紀錄 & 任務清單產出")
+st.title(f"🧠 {current_text['title']}")
+st.subheader(current_text["subtitle"])
 
 # 設定你的 API 金鑰（從 Streamlit secrets 獲取）
 try:
     api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
     if api_key:
-        st.sidebar.success("API key 已載入")
+        st.sidebar.success(current_text["api_key_loaded"])
     else:
-        st.sidebar.error("未找到 API key")
+        st.sidebar.error(current_text["api_key_not_found"])
 except Exception as e:
-    st.sidebar.error(f"無法獲取 API key: {e}")
+    st.sidebar.error(f"{current_text['api_key_error']} {e}")
     api_key = None
 
 # 直接使用 requests 庫調用 OpenAI API，避免使用 OpenAI 客戶端
@@ -225,26 +299,104 @@ PM：好的，我們會確保在月底前完成註冊流程的優化。所有人
     """
 }
 
+# 定義中英文界面文字
+ui_text = {
+    "中文": {
+        "title": "Context Catcher",
+        "subtitle": "自動摘要你的對話紀錄 & 任務清單產出",
+        "about_header": "關於 Context Catcher",
+        "about_text": "Context Catcher 幫助你自動分析會議記錄或對話內容，生成摘要和任務清單，讓你的工作更有效率。",
+        "usage_header": "使用說明",
+        "usage_step1": "1. 將對話記錄貼到輸入框中",
+        "usage_step2": "2. 點擊「分析對話紀錄」按鈕",
+        "usage_step3": "3. 獲取摘要和任務清單",
+        "feedback_header": "我們需要您的意見！",
+        "feedback_button": "🎯 提供反饋",
+        "feedback_caption": "點擊上方按鈕，在 Google 表單中提供您的寶貴意見",
+        "language_selector": "選擇語言",
+        "input_label": "請貼上你的對話紀錄",
+        "examples_header": "範例對話",
+        "examples_selector": "選擇一個範例",
+        "paste_example": "一鍵貼上範例",
+        "paste_success": "範例已貼上，請點擊「分析對話紀錄」按鈕進行分析",
+        "analyze_button": "🔍 分析對話紀錄",
+        "api_key_loaded": "API key 已載入",
+        "api_key_not_found": "未找到 API key",
+        "api_key_error": "無法獲取 API key: ",
+        "input_empty": "⚠️ 請先輸入對話紀錄或選擇一個範例。",
+        "analyzing": "🤖 AI 正在理解對話內容中...",
+        "analysis_complete": "✅ 分析完成！",
+        "analysis_result": "📝 分析結果",
+        "copy_button": "📋 複製分析結果到剪貼簿",
+        "copy_success": "✅ 已複製到剪貼簿",
+        "copy_fail": "複製失敗，請手動選取文本並複製"
+    },
+    "English": {
+        "title": "Context Catcher",
+        "subtitle": "Automatically summarize your conversations & generate task lists",
+        "about_header": "About Context Catcher",
+        "about_text": "Context Catcher helps you automatically analyze meeting records or conversation content, generate summaries and task lists, making your work more efficient.",
+        "usage_header": "How to Use",
+        "usage_step1": "1. Paste your conversation record in the input box",
+        "usage_step2": "2. Click the 'Analyze Conversation' button",
+        "usage_step3": "3. Get summary and task list",
+        "feedback_header": "We Need Your Feedback!",
+        "feedback_button": "🎯 Provide Feedback",
+        "feedback_caption": "Click the button above to provide your valuable feedback in the Google Form",
+        "language_selector": "Select Language",
+        "input_label": "Please paste your conversation record",
+        "examples_header": "Example Conversations",
+        "examples_selector": "Select an example",
+        "paste_example": "Paste Example",
+        "paste_success": "Example pasted, please click the 'Analyze Conversation' button to analyze",
+        "analyze_button": "🔍 Analyze Conversation",
+        "api_key_loaded": "API key loaded",
+        "api_key_not_found": "API key not found",
+        "api_key_error": "Failed to get API key: ",
+        "input_empty": "⚠️ Please enter conversation record or select an example first.",
+        "analyzing": "🤖 AI is understanding the conversation content...",
+        "analysis_complete": "✅ Analysis complete!",
+        "analysis_result": "📝 Analysis Result",
+        "copy_button": "📋 Copy Analysis Result",
+        "copy_success": "✅ Copied to clipboard",
+        "copy_fail": "Copy failed, please manually select and copy the text"
+    }
+}
+
 # 側邊欄功能
 with st.sidebar:
-    st.header("關於 Context Catcher")
-    st.write("Context Catcher 幫助你自動分析會議記錄或對話內容，生成摘要和任務清單，讓你的工作更有效率。")
+    # 語言選擇
+    selected_language = st.selectbox(
+        "選擇語言 / Select Language",
+        ["中文", "English"],
+        index=0 if st.session_state["language"] == "中文" else 1,
+        key="language_selector"
+    )
 
-    st.subheader("使用說明")
-    st.write("1. 將對話記錄貼到輸入框中")
-    st.write("2. 點擊「分析對話紀錄」按鈕")
-    st.write("3. 獲取摘要和任務清單")
+    # 更新 session state 中的語言設置
+    st.session_state["language"] = selected_language
+
+    # 獲取當前語言的文字
+    current_text = ui_text[selected_language]
+
+    st.header(current_text["about_header"])
+    st.write(current_text["about_text"])
+
+    st.subheader(current_text["usage_header"])
+    st.write(current_text["usage_step1"])
+    st.write(current_text["usage_step2"])
+    st.write(current_text["usage_step3"])
 
     # 加入反饋按鈕 - 使用真實的 Google 表單連結
-    st.markdown("### 我們需要您的意見！")
-    st.markdown("""
+    st.markdown(f"### {current_text['feedback_header']}")
+    st.markdown(f"""
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSegSiDo03OePxu48EK5WMTcIeq_OyQkia_rCpIwu3wyimrm5w/viewform?usp=header" target="_blank" class="feedback-btn">
-        🎯 提供反饋
+        {current_text['feedback_button']}
     </a>
     """, unsafe_allow_html=True)
 
     # 添加說明文字
-    st.caption("點擊上方按鈕，在 Google 表單中提供您的寶貴意見")
+    st.caption(current_text["feedback_caption"])
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
@@ -259,7 +411,7 @@ def update_chat_input():
 
 with col1:
     # 輸入區域 - 不直接使用會話狀態作為初始值
-    chat_input = st.text_area("請貼上你的對話紀錄",
+    chat_input = st.text_area(current_text["input_label"],
                               value="",  # Start with empty string instead of session_state
                               height=300,
                               key="chat_input_area")
@@ -268,46 +420,48 @@ with col1:
     st.session_state["chat_input"] = chat_input
 
 with col2:
-    st.subheader("範例對話")
+    st.subheader(current_text["examples_header"])
 
     # 選擇範例下拉框
     selected_example = st.selectbox(
-        "選擇一個範例",
+        current_text["examples_selector"],
         list(example_conversations.keys()),
         key="selected_example"
     )
 
     # 一鍵貼上範例按鈕
-    if st.button("一鍵貼上範例", on_click=update_chat_input):
+    if st.button(current_text["paste_example"], on_click=update_chat_input):
         # 顯示成功訊息
-        st.success("範例已貼上，請點擊「分析對話紀錄」按鈕進行分析")
+        st.success(current_text["paste_success"])
         # 確保 chat_input 變數也被更新
         chat_input = example_conversations[st.session_state["selected_example"]]
 
 # 控制按鈕區域
-analyze_button = st.button("🔍 分析對話紀錄", use_container_width=True)
+analyze_button = st.button(current_text["analyze_button"], use_container_width=True)
 
 # Session state variables are already initialized at the top of the script
 
 if analyze_button:
     # 檢查 API key 是否可用
     if not api_key:
-        st.error("⚠️ 未找到 API key，請確保已在 Streamlit Secrets 中設置 OPENAI_API_KEY。")
+        st.error(f"⚠️ {current_text['api_key_not_found']}")
     # 檢查輸入是否為空
     elif not chat_input.strip():
-        st.warning("⚠️ 請先輸入對話紀錄或選擇一個範例。")
+        st.warning(current_text["input_empty"])
     else:
         # 確保 session_state 中有最新的輸入值
         st.session_state["chat_input"] = chat_input
 
-        with st.spinner("🤖 AI 正在理解對話內容中..."):
+        with st.spinner(current_text["analyzing"]):
             # 顯示進度條
             progress_bar = st.progress(0)
             for i in range(100):
                 time.sleep(0.01)
                 progress_bar.progress(i + 1)
 
-            prompt = f"""
+            # 根據選擇的語言設置提示詞
+            if st.session_state["language"] == "中文":
+                prompt = f"""
 你是一個高效的AI分析助手，專門處理文字輸入並提取核心資訊。
 
 請根據以下文字內容進行分析：
@@ -318,12 +472,12 @@ if analyze_button:
 
 請使用以下格式輸出：
 
-## 📌 Summary
+{current_text["prompt_summary"]}
 - 重點1
 - 重點2
 - 重點3
 
-## ✅ To-Do List
+{current_text["prompt_todo"]}
 - [ ] 工作項目1
 - [ ] 工作項目2
 - [ ] 工作項目3
@@ -331,17 +485,42 @@ if analyze_button:
 文字內容：
 {chat_input}
 """
+            else:
+                prompt = f"""
+You are an efficient AI analysis assistant, specializing in processing text input and extracting core information.
+
+Please analyze the following text content:
+
+1. Read the input text, analyze and extract the most important information and key points, generating a concise summary.
+2. Identify actionable work items or follow-up actions from the text, listing them in a to-do list format.
+3. Finally, organize the summary and to-do items into a **Markdown format** output that is clear, easy to read, and copy.
+
+Please use the following output format:
+
+{current_text["prompt_summary"]}
+- Key point 1
+- Key point 2
+- Key point 3
+
+{current_text["prompt_todo"]}
+- [ ] Task item 1
+- [ ] Task item 2
+- [ ] Task item 3
+
+Text content:
+{chat_input}
+"""
             # 使用我們的自定義函數調用 OpenAI API
             output = call_openai_api(prompt)
 
             # 檢查輸出是否包含錯誤信息
-            if output.startswith("錯誤:"):
+            if output.startswith("錯誤:") or output.startswith("Error:"):
                 st.error(f"⚠️ {output}")
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態
-                st.success("✅ 分析完成！")
+                st.success(current_text["analysis_complete"])
 
 # 顯示結果
 if st.session_state["analysis_result"]:
@@ -349,7 +528,7 @@ if st.session_state["analysis_result"]:
     result_text = st.session_state["analysis_result"]
 
     # 顯示分析結果
-    st.markdown("### 📝 分析結果")
+    st.markdown(f"### {current_text['analysis_result']}")
 
     # 使用 st.empty() 創建一個容器，確保內容只顯示一次
     result_container = st.empty()
@@ -401,11 +580,11 @@ if st.session_state["analysis_result"]:
             if (successful) {
                 showCopySuccessMessage();
             } else {
-                alert('複製失敗，請手動選取文本並複製');
+                alert('""" + current_text["copy_fail"] + """');
             }
         } catch(err) {
             console.error('無法複製文本: ', err);
-            alert('複製失敗，請手動選取文本並複製');
+            alert('""" + current_text["copy_fail"] + """');
         }
 
         // 移除臨時元素
@@ -423,7 +602,7 @@ if st.session_state["analysis_result"]:
         // 顯示成功訊息
         const successMsg = document.createElement('div');
         successMsg.id = 'copy-success-message';
-        successMsg.textContent = '✅ 已複製到剪貼簿';
+        successMsg.textContent = '""" + current_text["copy_success"] + """';
         successMsg.style.position = 'fixed';
         successMsg.style.top = '20px';
         successMsg.style.left = '50%';
@@ -453,7 +632,7 @@ if st.session_state["analysis_result"]:
         <textarea id="copy_text_area" style="position: absolute; left: -9999px;">{result_text}</textarea>
         <button onclick="copyTextToClipboard(document.getElementById('copy_text_area').value);"
                 style="width: 100%; padding: 0.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
-            📋 複製分析結果到剪貼簿
+            {current_text["copy_button"]}
         </button>
     </div>
     """
