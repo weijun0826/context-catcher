@@ -205,23 +205,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 獲取當前語言的文字
-current_text = ui_text[st.session_state["language"]]
+# We'll set the page title and subtitle in the main content area after language selection
 
-# 設定頁面標題和描述
-st.title(f"🧠 {current_text['title']}")
-st.subheader(current_text["subtitle"])
-
-# 設定你的 API 金鑰（從 Streamlit secrets 獲取）
-try:
-    api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
-    if api_key:
-        st.sidebar.success(current_text["api_key_loaded"])
-    else:
-        st.sidebar.error(current_text["api_key_not_found"])
-except Exception as e:
-    st.sidebar.error(f"{current_text['api_key_error']} {e}")
-    api_key = None
+# We'll set up the API key after language selection in the sidebar
 
 # 直接使用 requests 庫調用 OpenAI API，避免使用 OpenAI 客戶端
 def call_openai_api(prompt, model="gpt-3.5-turbo", temperature=0.3, max_tokens=800):
@@ -255,9 +241,10 @@ def call_openai_api(prompt, model="gpt-3.5-turbo", temperature=0.3, max_tokens=8
     except Exception as e:
         return f"錯誤: {str(e)}"
 
-# 範例對話內容
+# Define example conversations in both languages
 example_conversations = {
-    "團隊會議摘要": """
+    "中文": {
+        "團隊會議摘要": """
 小明（產品經理）：各位好，今天我們來討論新版App的功能更新。
 小華（工程師）：我已經完成了後端API的開發，這週五前可以交付。
 小陳（UI設計師）：使用者介面設計已經完成了，我等等會上傳檔案。
@@ -268,8 +255,8 @@ example_conversations = {
 小英：那麼，我們還需要確認一下市場行銷的時間表，小明你能聯繫一下行銷部門嗎？
 小明：好的，我明天會和他們確認，並在週三的例會上報告。
 小英：太好了，那今天的會議就到這裡，謝謝大家。
-    """,
-    "客戶需求討論": """
+        """,
+        "客戶需求討論": """
 客戶：我們需要一個能夠幫助我們管理庫存的系統。
 我們：好的，能具體說明您的需求嗎？
 客戶：我們有三個倉庫，每天大約處理200個訂單，需要實時更新庫存。
@@ -283,8 +270,8 @@ example_conversations = {
 客戶：是的，倉庫工作人員需要使用手機或平板電腦來更新庫存。
 我們：明白了，那麼我們下週三前會給您提供詳細的需求文檔和估價方案。
 客戶：太好了，我期待您的提案。
-    """,
-    "產品開發規劃": """
+        """,
+        "產品開發規劃": """
 PM：今天我們需要規劃下個季度的產品路線圖。
 工程師：上個季度的技術債務還沒解決完，我們需要分配時間處理。
 設計師：我們有用戶反饋說界面太複雜，需要簡化。
@@ -296,72 +283,58 @@ PM：那我們需要優先改善註冊流程，目標是提高到80%。
 PM：太好了，那麼我們的優先順序是：1. 改善註冊流程，2. 簡化界面，3. 處理技術債務。
 市場團隊：我們計劃在下個月底進行新一輪的市場推廣，希望能配合產品更新。
 PM：好的，我們會確保在月底前完成註冊流程的優化。所有人，請在明天下午2點前發送各自的詳細計劃給我。
-    """
-}
-
-# 定義中英文界面文字
-ui_text = {
-    "中文": {
-        "title": "Context Catcher",
-        "subtitle": "自動摘要你的對話紀錄 & 任務清單產出",
-        "about_header": "關於 Context Catcher",
-        "about_text": "Context Catcher 幫助你自動分析會議記錄或對話內容，生成摘要和任務清單，讓你的工作更有效率。",
-        "usage_header": "使用說明",
-        "usage_step1": "1. 將對話記錄貼到輸入框中",
-        "usage_step2": "2. 點擊「分析對話紀錄」按鈕",
-        "usage_step3": "3. 獲取摘要和任務清單",
-        "feedback_header": "我們需要您的意見！",
-        "feedback_button": "🎯 提供反饋",
-        "feedback_caption": "點擊上方按鈕，在 Google 表單中提供您的寶貴意見",
-        "language_selector": "選擇語言",
-        "input_label": "請貼上你的對話紀錄",
-        "examples_header": "範例對話",
-        "examples_selector": "選擇一個範例",
-        "paste_example": "一鍵貼上範例",
-        "paste_success": "範例已貼上，請點擊「分析對話紀錄」按鈕進行分析",
-        "analyze_button": "🔍 分析對話紀錄",
-        "api_key_loaded": "API key 已載入",
-        "api_key_not_found": "未找到 API key",
-        "api_key_error": "無法獲取 API key: ",
-        "input_empty": "⚠️ 請先輸入對話紀錄或選擇一個範例。",
-        "analyzing": "🤖 AI 正在理解對話內容中...",
-        "analysis_complete": "✅ 分析完成！",
-        "analysis_result": "📝 分析結果",
-        "copy_button": "📋 複製分析結果到剪貼簿",
-        "copy_success": "✅ 已複製到剪貼簿",
-        "copy_fail": "複製失敗，請手動選取文本並複製"
+        """
     },
     "English": {
-        "title": "Context Catcher",
-        "subtitle": "Automatically summarize your conversations & generate task lists",
-        "about_header": "About Context Catcher",
-        "about_text": "Context Catcher helps you automatically analyze meeting records or conversation content, generate summaries and task lists, making your work more efficient.",
-        "usage_header": "How to Use",
-        "usage_step1": "1. Paste your conversation record in the input box",
-        "usage_step2": "2. Click the 'Analyze Conversation' button",
-        "usage_step3": "3. Get summary and task list",
-        "feedback_header": "We Need Your Feedback!",
-        "feedback_button": "🎯 Provide Feedback",
-        "feedback_caption": "Click the button above to provide your valuable feedback in the Google Form",
-        "language_selector": "Select Language",
-        "input_label": "Please paste your conversation record",
-        "examples_header": "Example Conversations",
-        "examples_selector": "Select an example",
-        "paste_example": "Paste Example",
-        "paste_success": "Example pasted, please click the 'Analyze Conversation' button to analyze",
-        "analyze_button": "🔍 Analyze Conversation",
-        "api_key_loaded": "API key loaded",
-        "api_key_not_found": "API key not found",
-        "api_key_error": "Failed to get API key: ",
-        "input_empty": "⚠️ Please enter conversation record or select an example first.",
-        "analyzing": "🤖 AI is understanding the conversation content...",
-        "analysis_complete": "✅ Analysis complete!",
-        "analysis_result": "📝 Analysis Result",
-        "copy_button": "📋 Copy Analysis Result",
-        "copy_success": "✅ Copied to clipboard",
-        "copy_fail": "Copy failed, please manually select and copy the text"
+        "Team Meeting Summary": """
+Xiao Ming (Product Manager): Hello everyone, today we'll discuss the feature updates for the new version of the App.
+Xiao Hua (Engineer): I've completed the backend API development and can deliver it by this Friday.
+Xiao Chen (UI Designer): The user interface design is complete, I'll upload the files shortly.
+Xiao Ying (Project Manager): Then we'll schedule internal testing to begin next Monday, and submit to the client by next Friday.
+Xiao Ming: Good, I need everyone to send me their test reports by 2 PM on Thursday for integration.
+Xiao Hua: Understood, I'll complete the unit tests by Wednesday.
+Xiao Chen: I'll prepare the design documents and send them to everyone for review by next Tuesday.
+Xiao Ying: Also, we need to confirm the marketing timeline. Xiao Ming, can you contact the marketing department?
+Xiao Ming: Yes, I'll confirm with them tomorrow and report at Wednesday's meeting.
+Xiao Ying: Great, that's all for today's meeting. Thank you everyone.
+        """,
+        "Client Requirements Discussion": """
+Client: We need a system that can help us manage our inventory.
+Us: Understood, can you specify your requirements in more detail?
+Client: We have three warehouses, processing about 200 orders daily, and need real-time inventory updates.
+Us: I see. What specific features do you need? For example, inventory alerts, reports, etc.?
+Client: Yes, we need alerts when inventory falls below a certain threshold, and daily, weekly, and monthly inventory reports.
+Us: Good. Regarding user permissions, what are your requirements?
+Client: We need at least three permission levels: administrator, warehouse supervisor, and general staff.
+Us: Understood. What about system integration? Which existing systems do you need to connect with?
+Client: We're using QuickBooks for accounting and need integration with it.
+Us: Good. Do you have any requirements for mobile use?
+Client: Yes, warehouse staff need to use mobile phones or tablets to update inventory.
+Us: Understood. We'll provide you with detailed requirements documentation and a pricing proposal by next Wednesday.
+Client: Great, I look forward to your proposal.
+        """,
+        "Product Development Planning": """
+PM: Today we need to plan the product roadmap for the next quarter.
+Engineer: We haven't finished resolving the technical debt from last quarter, we need to allocate time for that.
+Designer: We have user feedback saying the interface is too complex and needs simplification.
+PM: Okay, we'll prioritize these two issues before considering new features.
+Data Analyst: Data shows users are mainly stuck in the registration process, with only a 60% completion rate.
+PM: Then we need to prioritize improving the registration process, with a goal to increase it to 80%.
+Engineer: Improving the registration process will take about 3 weeks of development time.
+Designer: I can provide a new registration process design by next Wednesday.
+PM: Great, so our priorities are: 1. Improve the registration process, 2. Simplify the interface, 3. Address technical debt.
+Marketing Team: We plan to launch a new round of marketing at the end of next month, hoping to coordinate with the product updates.
+PM: Good, we'll ensure the registration process optimization is completed by the end of the month. Everyone, please send me your detailed plans by 2 PM tomorrow.
+        """
     }
 }
+
+# This section was moved to the top of the file
+
+# Create a callback for language change
+def on_language_change():
+    # Force a rerun of the app when language changes
+    st.rerun()
 
 # 側邊欄功能
 with st.sidebar:
@@ -370,7 +343,8 @@ with st.sidebar:
         "選擇語言 / Select Language",
         ["中文", "English"],
         index=0 if st.session_state["language"] == "中文" else 1,
-        key="language_selector"
+        key="language_selector",
+        on_change=on_language_change
     )
 
     # 更新 session state 中的語言設置
@@ -378,6 +352,17 @@ with st.sidebar:
 
     # 獲取當前語言的文字
     current_text = ui_text[selected_language]
+
+    # 設定 API 金鑰（從 Streamlit secrets 獲取）
+    try:
+        api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
+        if api_key:
+            st.success(current_text["api_key_loaded"])
+        else:
+            st.error(current_text["api_key_not_found"])
+    except Exception as e:
+        st.error(f"{current_text['api_key_error']} {e}")
+        api_key = None
 
     st.header(current_text["about_header"])
     st.write(current_text["about_text"])
@@ -401,13 +386,26 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
 
+# Set page title and subtitle based on current language
+st.title(f"🧠 {current_text['title']}")
+st.subheader(current_text["subtitle"])
+
 # 主要內容區域
 col1, col2 = st.columns([2, 1])
+
+# Get example conversations for the current language
+current_examples = example_conversations[selected_language]
+
+# Initialize selected example if needed
+if "selected_example" not in st.session_state or st.session_state["selected_example"] not in current_examples:
+    # Set default example for the current language
+    default_example = list(current_examples.keys())[0]
+    st.session_state["selected_example"] = default_example
 
 # 定義一個回調函數來更新對話輸入
 def update_chat_input():
     # 直接更新文本區域的值
-    st.session_state["chat_input_area"] = example_conversations[st.session_state["selected_example"]]
+    st.session_state["chat_input_area"] = current_examples[st.session_state["selected_example"]]
 
 with col1:
     # 輸入區域 - 不直接使用會話狀態作為初始值
@@ -425,7 +423,7 @@ with col2:
     # 選擇範例下拉框
     selected_example = st.selectbox(
         current_text["examples_selector"],
-        list(example_conversations.keys()),
+        list(current_examples.keys()),
         key="selected_example"
     )
 
@@ -434,7 +432,7 @@ with col2:
         # 顯示成功訊息
         st.success(current_text["paste_success"])
         # 確保 chat_input 變數也被更新
-        chat_input = example_conversations[st.session_state["selected_example"]]
+        chat_input = current_examples[st.session_state["selected_example"]]
 
 # 控制按鈕區域
 analyze_button = st.button(current_text["analyze_button"], use_container_width=True)
