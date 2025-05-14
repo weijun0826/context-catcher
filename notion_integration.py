@@ -29,18 +29,8 @@ class NotionIntegration:
 
     def set_database_id(self, database_id: str) -> None:
         """Set the Notion database ID."""
-        # Format the database ID to ensure it has hyphens in the correct places
-        if database_id:
-            # Remove any existing hyphens
-            clean_id = database_id.replace("-", "")
-            # Add hyphens in the correct positions if the ID is the right length
-            if len(clean_id) == 32:
-                formatted_id = f"{clean_id[0:8]}-{clean_id[8:12]}-{clean_id[12:16]}-{clean_id[16:20]}-{clean_id[20:32]}"
-                self.database_id = formatted_id
-            else:
-                self.database_id = database_id
-        else:
-            self.database_id = database_id
+        # Use the database ID as is, without formatting
+        self.database_id = database_id
 
     def get_headers(self) -> Dict[str, str]:
         """Get the headers required for Notion API requests."""
