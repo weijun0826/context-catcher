@@ -407,34 +407,28 @@ PM: Good, we'll ensure the registration process optimization is completed by the
 
 # This section was moved to the top of the file
 
-# Create a callback for language change
-def on_language_change():
-    # Force a rerun of the app when language changes
-    st.rerun()
-
-# Function to reset the app
-def reset_app():
-    # Clear input and results
-    st.session_state["chat_input"] = ""
-    st.session_state["chat_input_area"] = ""
-    st.session_state["analysis_result"] = None
-    st.session_state["result_displayed"] = False
-    # Keep usage history and language settings
-    st.rerun()
+# We don't need separate callbacks for language change or reset
+# We'll handle these directly in the main flow
 
 # 側邊欄功能
 with st.sidebar:
-    # 語言選擇
+    # 語言選擇 - 檢測語言變化
+    # Store the previous language before selection
+    previous_language = st.session_state["language"]
+
     selected_language = st.selectbox(
         "選擇語言 / Select Language",
         ["中文", "English"],
         index=0 if st.session_state["language"] == "中文" else 1,
-        key="language_selector",
-        on_change=on_language_change
+        key="language_selector"
     )
 
     # 更新 session state 中的語言設置
     st.session_state["language"] = selected_language
+
+    # Check if language has changed and rerun if needed
+    if previous_language != selected_language:
+        st.rerun()
 
     # 獲取當前語言的文字
     current_text = ui_text[selected_language]
@@ -482,7 +476,13 @@ with st.sidebar:
     if st.button(current_text['reset_button'],
                 help=current_text['reset_tooltip'],
                 key="reset_button"):
-        reset_app()
+        # Clear input and results
+        st.session_state["chat_input"] = ""
+        st.session_state["chat_input_area"] = ""
+        st.session_state["analysis_result"] = None
+        st.session_state["result_displayed"] = False
+        # Keep usage history and language settings
+        st.rerun()
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
