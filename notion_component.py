@@ -57,8 +57,20 @@ def render_notion_section(ui_text, analysis_result=None):
                         st.success(f"✅ {ui_text.get('language_selector') == 'Select Language' and 'Connected to database:' or '已連接到資料庫:'} {db_info.get('title', 'Untitled')}")
                     else:
                         st.warning(f"⚠️ {db_info.get('message', 'Failed to connect to database')}")
+                        # Add helpful guidance for database access issues
+                        if "object_not_found" in db_info.get('message', ''):
+                            st.error(f"""
+                            **請確保您已完成以下步驟：**
+                            1. 在 Notion 中創建了一個資料庫
+                            2. 在 https://www.notion.so/my-integrations 創建了一個整合
+                            3. 在 Notion 中與您的整合共享了資料庫（點擊資料庫右上角的「Share」按鈕，添加您的整合）
+                            4. 資料庫 ID 是正確的（從資料庫 URL 中獲取）
+                            """)
                 else:
                     st.error(f"{ui_text['notion_connection_failed']}: {result.get('message', '')}")
+                    # Add helpful guidance for API connection issues
+                    if "unauthorized" in result.get('message', '').lower():
+                        st.error("請確保您的 Notion API Key 是正確的，並且具有訪問權限。")
 
         # Setup instructions
         st.markdown(f"**{ui_text['notion_setup_instructions']}:**")
