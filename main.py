@@ -260,23 +260,11 @@ st.markdown("""
         font-size: 14px;
     }
 
-    /* Reset button styles */
-    .reset-btn {
-        background-color: #f0f2f6;
-        border-radius: 4px;
-        padding: 6px 12px;
-        border: 1px solid #ddd;
-        color: #31333F;
-        font-weight: 500;
-        text-align: center;
-        cursor: pointer;
-        display: inline-block;
-        margin-top: 10px;
+    /* Form button styles */
+    .stButton button, .stForm button {
         width: 100%;
-    }
-
-    .reset-btn:hover {
-        background-color: #e6e9ef;
+        border-radius: 4px;
+        font-weight: 500;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -412,23 +400,23 @@ PM: Good, we'll ensure the registration process optimization is completed by the
 
 # 側邊欄功能
 with st.sidebar:
-    # 語言選擇 - 檢測語言變化
-    # Store the previous language before selection
-    previous_language = st.session_state["language"]
+    # 語言選擇 - 使用表單和提交按鈕來處理語言切換
+    with st.form(key="language_form"):
+        selected_language = st.selectbox(
+            "選擇語言 / Select Language",
+            ["中文", "English"],
+            index=0 if st.session_state["language"] == "中文" else 1,
+            key="language_selector"
+        )
 
-    selected_language = st.selectbox(
-        "選擇語言 / Select Language",
-        ["中文", "English"],
-        index=0 if st.session_state["language"] == "中文" else 1,
-        key="language_selector"
-    )
+        # 添加一個隱藏的提交按鈕
+        submit_button = st.form_submit_button("切換語言", type="primary")
 
-    # 更新 session state 中的語言設置
-    st.session_state["language"] = selected_language
-
-    # Check if language has changed and rerun if needed
-    if previous_language != selected_language:
-        st.rerun()
+        # 只有在提交表單時才更新語言設置
+        if submit_button:
+            st.session_state["language"] = selected_language
+            # 使用 rerun
+            st.rerun()
 
     # 獲取當前語言的文字
     current_text = ui_text[selected_language]
@@ -472,17 +460,22 @@ with st.sidebar:
             for item in st.session_state["usage_history"]:
                 st.markdown(f"""<div class="usage-history-item">{item}</div>""", unsafe_allow_html=True)
 
-    # Add reset button - using Streamlit's native button instead of HTML
-    if st.button(current_text['reset_button'],
-                help=current_text['reset_tooltip'],
-                key="reset_button"):
-        # Clear input and results
-        st.session_state["chat_input"] = ""
-        st.session_state["chat_input_area"] = ""
-        st.session_state["analysis_result"] = None
-        st.session_state["result_displayed"] = False
-        # Keep usage history and language settings
-        st.rerun()
+    # Add reset button - using a form to avoid callback issues
+    with st.form(key="reset_form"):
+        reset_submitted = st.form_submit_button(
+            current_text['reset_button'],
+            help=current_text['reset_tooltip'],
+            type="primary"
+        )
+
+        if reset_submitted:
+            # Clear input and results
+            st.session_state["chat_input"] = ""
+            st.session_state["chat_input_area"] = ""
+            st.session_state["analysis_result"] = None
+            st.session_state["result_displayed"] = False
+            # Keep usage history and language settings
+            st.rerun()
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
@@ -503,10 +496,7 @@ if "selected_example" not in st.session_state or st.session_state["selected_exam
     default_example = list(current_examples.keys())[0]
     st.session_state["selected_example"] = default_example
 
-# 定義一個回調函數來更新對話輸入
-def update_chat_input():
-    # 直接更新文本區域的值
-    st.session_state["chat_input_area"] = current_examples[st.session_state["selected_example"]]
+# 不再需要單獨的回調函數來更新對話輸入
 
 with col1:
     # 輸入區域 - 不直接使用會話狀態作為初始值
@@ -528,12 +518,19 @@ with col2:
         key="selected_example"
     )
 
-    # 一鍵貼上範例按鈕
-    if st.button(current_text["paste_example"], on_click=update_chat_input):
-        # 顯示成功訊息
-        st.success(current_text["paste_success"])
-        # 確保 chat_input 變數也被更新
-        chat_input = current_examples[st.session_state["selected_example"]]
+    # 一鍵貼上範例按鈕 - 使用表單避免回調問題
+    with st.form(key="paste_example_form"):
+        paste_submitted = st.form_submit_button(
+            current_text["paste_example"],
+            type="primary"
+        )
+
+        if paste_submitted:
+            # 直接更新文本區域的值
+            st.session_state["chat_input_area"] = current_examples[st.session_state["selected_example"]]
+            # 顯示成功訊息並重新運行
+            st.success(current_text["paste_success"])
+            st.rerun()
 
 # 控制按鈕區域
 analyze_button = st.button(current_text["analyze_button"], use_container_width=True)
