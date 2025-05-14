@@ -472,12 +472,12 @@ if analyze_button:
 
 請使用以下格式輸出：
 
-{current_text["prompt_summary"]}
+## 📌 摘要
 - 重點1
 - 重點2
 - 重點3
 
-{current_text["prompt_todo"]}
+## ✅ 待辦事項清單
 - [ ] 工作項目1
 - [ ] 工作項目2
 - [ ] 工作項目3
@@ -497,12 +497,12 @@ Please analyze the following text content:
 
 Please use the following output format:
 
-{current_text["prompt_summary"]}
+## 📌 Summary
 - Key point 1
 - Key point 2
 - Key point 3
 
-{current_text["prompt_todo"]}
+## ✅ To-Do List
 - [ ] Task item 1
 - [ ] Task item 2
 - [ ] Task item 3
