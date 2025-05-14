@@ -471,7 +471,6 @@ with st.sidebar:
         if reset_submitted:
             # Clear input and results
             st.session_state["chat_input"] = ""
-            st.session_state["chat_input_area"] = ""
             st.session_state["analysis_result"] = None
             st.session_state["result_displayed"] = False
             # Keep usage history and language settings
@@ -499,9 +498,9 @@ if "selected_example" not in st.session_state or st.session_state["selected_exam
 # 不再需要單獨的回調函數來更新對話輸入
 
 with col1:
-    # 輸入區域 - 不直接使用會話狀態作為初始值
+    # 輸入區域 - 使用會話狀態作為初始值
     chat_input = st.text_area(current_text["input_label"],
-                              value="",  # Start with empty string instead of session_state
+                              value=st.session_state["chat_input"],  # Use session_state value
                               height=300,
                               key="chat_input_area")
 
@@ -526,8 +525,8 @@ with col2:
         )
 
         if paste_submitted:
-            # 直接更新文本區域的值
-            st.session_state["chat_input_area"] = current_examples[st.session_state["selected_example"]]
+            # 更新會話狀態中的聊天輸入值，而不是直接更新文本區域
+            st.session_state["chat_input"] = current_examples[st.session_state["selected_example"]]
             # 顯示成功訊息並重新運行
             st.success(current_text["paste_success"])
             st.rerun()
