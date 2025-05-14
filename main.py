@@ -478,21 +478,11 @@ with st.sidebar:
             for item in st.session_state["usage_history"]:
                 st.markdown(f"""<div class="usage-history-item">{item}</div>""", unsafe_allow_html=True)
 
-    # Add reset button
-    st.markdown(f"""
-    <div title="{current_text['reset_tooltip']}">
-        <button class="reset-btn" id="reset-button" onclick="document.getElementById('reset-form-submit').click()">
-            {current_text['reset_button']}
-        </button>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Hidden form for reset button
-    reset_form = st.form("reset_form", clear_on_submit=True)
-    with reset_form:
-        submitted = st.form_submit_button("Hidden Submit", key="reset-form-submit")
-        if submitted:
-            reset_app()
+    # Add reset button - using Streamlit's native button instead of HTML
+    if st.button(current_text['reset_button'],
+                help=current_text['reset_tooltip'],
+                key="reset_button"):
+        reset_app()
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
