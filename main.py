@@ -61,7 +61,12 @@ ui_text = {
         "notion_no_analysis": "請先分析對話",
         "notion_api_key_help": "您可以從 https://www.notion.so/my-integrations 獲取 API key",
         "notion_database_id_help": "您想要保存分析結果的資料庫 ID",
-        "notion_setup_instructions": "如何設置 Notion 集成"
+        "notion_setup_instructions": "如何設置 Notion 集成",
+        "usage_history_header": "使用歷史",
+        "usage_history_empty": "尚無使用歷史",
+        "usage_history_item": "分析於 {time}",
+        "reset_button": "🔄 重置頁面",
+        "reset_tooltip": "清除所有輸入和結果，重新開始"
     },
     "English": {
         "title": "Context Catcher",
@@ -109,7 +114,12 @@ ui_text = {
         "notion_no_analysis": "Please analyze a conversation first",
         "notion_api_key_help": "You can get your API key from https://www.notion.so/my-integrations",
         "notion_database_id_help": "The ID of the database where you want to save the analysis",
-        "notion_setup_instructions": "How to set up Notion integration"
+        "notion_setup_instructions": "How to set up Notion integration",
+        "usage_history_header": "Usage History",
+        "usage_history_empty": "No usage history yet",
+        "usage_history_item": "Analysis at {time}",
+        "reset_button": "🔄 Reset Page",
+        "reset_tooltip": "Clear all inputs and results to start fresh"
     }
 }
 
@@ -128,6 +138,10 @@ if "result_displayed" not in st.session_state:
 
 if "language" not in st.session_state:
     st.session_state["language"] = "中文"  # 默認語言為中文
+
+# Initialize usage history
+if "usage_history" not in st.session_state:
+    st.session_state["usage_history"] = []
 
 # Custom CSS for better mobile experience
 st.markdown("""
@@ -234,6 +248,35 @@ st.markdown("""
 
     .download-btn:hover {
         background-color: #0b7dda;
+    }
+
+    /* Usage history styles */
+    .usage-history-item {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border-left: 3px solid #4CAF50;
+        font-size: 14px;
+    }
+
+    /* Reset button styles */
+    .reset-btn {
+        background-color: #f0f2f6;
+        border-radius: 4px;
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        color: #31333F;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        display: inline-block;
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    .reset-btn:hover {
+        background-color: #e6e9ef;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -369,6 +412,16 @@ def on_language_change():
     # Force a rerun of the app when language changes
     st.rerun()
 
+# Function to reset the app
+def reset_app():
+    # Clear input and results
+    st.session_state["chat_input"] = ""
+    st.session_state["chat_input_area"] = ""
+    st.session_state["analysis_result"] = None
+    st.session_state["result_displayed"] = False
+    # Keep usage history and language settings
+    st.rerun()
+
 # 側邊欄功能
 with st.sidebar:
     # 語言選擇
@@ -415,6 +468,31 @@ with st.sidebar:
 
     # 添加說明文字
     st.caption(current_text["feedback_caption"])
+
+    # Add usage history section
+    st.markdown("---")
+    with st.expander(f"📊 {current_text['usage_history_header']}", expanded=False):
+        if not st.session_state["usage_history"]:
+            st.info(current_text["usage_history_empty"])
+        else:
+            for item in st.session_state["usage_history"]:
+                st.markdown(f"""<div class="usage-history-item">{item}</div>""", unsafe_allow_html=True)
+
+    # Add reset button
+    st.markdown(f"""
+    <div title="{current_text['reset_tooltip']}">
+        <button class="reset-btn" id="reset-button" onclick="document.getElementById('reset-form-submit').click()">
+            {current_text['reset_button']}
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Hidden form for reset button
+    reset_form = st.form("reset_form", clear_on_submit=True)
+    with reset_form:
+        submitted = st.form_submit_button("Hidden Submit", key="reset-form-submit")
+        if submitted:
+            reset_app()
 
     st.markdown("---")
     st.markdown("© 2025 Context Catcher")
@@ -551,6 +629,17 @@ Text content:
             else:
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態
+
+                # Record in usage history with timestamp
+                import datetime
+                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                history_item = current_text["usage_history_item"].format(time=current_time)
+                st.session_state["usage_history"].insert(0, history_item)  # Add to beginning of list
+
+                # Limit history to 10 items
+                if len(st.session_state["usage_history"]) > 10:
+                    st.session_state["usage_history"] = st.session_state["usage_history"][:10]
+
                 st.success(current_text["analysis_complete"])
 
 # 顯示結果
