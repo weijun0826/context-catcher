@@ -3,6 +3,7 @@ import os
 import requests
 import json
 import time
+import datetime
 from notion_component import render_notion_section
 
 # Page configuration
@@ -64,7 +65,9 @@ ui_text = {
         "notion_setup_instructions": "如何設置 Notion 集成",
         "usage_history_header": "使用歷史",
         "usage_history_empty": "尚無使用歷史",
-        "usage_history_item": "分析於 {time}",
+        "usage_history_item": "{title}",
+        "usage_history_restore": "恢復此分析",
+        "usage_history_toggle": "切換歷史紀錄",
         "view_history_button": "📋 查看使用歷史",
         "view_history_tooltip": "查看您的使用歷史記錄",
         "close_history_button": "關閉",
@@ -120,7 +123,9 @@ ui_text = {
         "notion_setup_instructions": "How to set up Notion integration",
         "usage_history_header": "Usage History",
         "usage_history_empty": "No usage history yet",
-        "usage_history_item": "Analysis at {time}",
+        "usage_history_item": "{title}",
+        "usage_history_restore": "Restore this analysis",
+        "usage_history_toggle": "Toggle history",
         "view_history_button": "📋 View Usage History",
         "view_history_tooltip": "View your usage history",
         "close_history_button": "Close",
@@ -149,11 +154,19 @@ if "language" not in st.session_state:
 if "usage_history" not in st.session_state:
     st.session_state["usage_history"] = []
 
-# Initialize history modal state
-if "show_history_modal" not in st.session_state:
-    st.session_state["show_history_modal"] = False
+# Initialize history sidebar state (replaces the old modal state)
+if "show_history_sidebar" not in st.session_state:
+    st.session_state["show_history_sidebar"] = False
 
-# Custom CSS and JavaScript for better mobile experience and modal functionality
+# Initialize current page state
+if "current_page" not in st.session_state:
+    st.session_state["current_page"] = {"chat_input": "", "analysis_result": None}
+
+# Initialize history stack
+if "history_stack" not in st.session_state:
+    st.session_state["history_stack"] = []
+
+# Custom CSS for better mobile experience and sidebar functionality
 st.markdown("""
 <style>
     .main .block-container {
@@ -277,78 +290,20 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Modal styles */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    /* Enhanced history item styles */
+    .usage-history-item {
+        padding: 12px 15px;
+        margin-bottom: 12px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #4CAF50;
+        transition: all 0.2s ease;
     }
 
-    .modal-container {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        width: 80%;
-        max-width: 600px;
-        max-height: 80vh;
-        overflow-y: auto;
-        padding: 20px;
-        position: relative;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-    }
-
-    .modal-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin: 0;
-    }
-
-    .modal-close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: #666;
-    }
-
-    .modal-content {
-        margin-bottom: 15px;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        border-top: 1px solid #eee;
-        padding-top: 10px;
-    }
-
-    .modal-btn {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .modal-btn:hover {
-        background-color: #45a049;
+    .usage-history-item:hover {
+        background-color: #f0f2f6;
+        border-left-color: #2E7D32;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     /* History button styles */
@@ -370,40 +325,83 @@ st.markdown("""
     }
 </style>
 
-<script>
-    // Function to toggle the history modal
-    function toggleHistoryModal() {
-        const modal = document.getElementById('historyModal');
-        if (modal.style.display === 'none' || modal.style.display === '') {
-            modal.style.display = 'flex';
-        } else {
-            modal.style.display = 'none';
-        }
-    }
 
-    // Function to close the history modal
-    function closeHistoryModal() {
-        const modal = document.getElementById('historyModal');
-        modal.style.display = 'none';
-    }
-
-    // Close modal when clicking outside the modal content
-    window.onclick = function(event) {
-        const modal = document.getElementById('historyModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    }
-</script>
 """, unsafe_allow_html=True)
 
 # We'll set the page title and subtitle in the main content area after language selection
 
 # We'll set up the API key after language selection in the sidebar
 
-# Function to toggle the history modal
-def toggle_history_modal():
-    st.session_state["show_history_modal"] = not st.session_state["show_history_modal"]
+# Function to toggle the history sidebar
+def toggle_history_sidebar():
+    st.session_state["show_history_sidebar"] = not st.session_state["show_history_sidebar"]
+
+# Function to extract the first part of the summary from analysis result
+def extract_summary_title(analysis_result):
+    if not analysis_result:
+        return "Untitled Analysis"
+
+    # Split by sections
+    sections = analysis_result.split("##")
+
+    for section in sections:
+        if "📌" in section or "Summary" in section or "摘要" in section:
+            # Get the first bullet point
+            lines = section.strip().split("\n")
+            for line in lines:
+                if line.strip().startswith("- "):
+                    # Return the first 30 characters of the first bullet point
+                    title = line.strip()[2:].strip()
+                    return title[:50] + ("..." if len(title) > 50 else "")
+
+    # If no summary found, return a default title
+    return "Untitled Analysis"
+
+# Function to save current state to history
+def save_to_history(chat_input, analysis_result):
+    if not analysis_result:
+        return
+
+    # Extract title from the summary
+    title = extract_summary_title(analysis_result)
+
+    # Create history item
+    history_item = {
+        "title": title,
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "chat_input": chat_input,
+        "analysis_result": analysis_result
+    }
+
+    # Add to history
+    st.session_state["usage_history"].insert(0, history_item)
+
+    # Limit history to 10 items
+    if len(st.session_state["usage_history"]) > 10:
+        st.session_state["usage_history"] = st.session_state["usage_history"][:10]
+
+# Function to restore state from history
+def restore_from_history(index):
+    if index < 0 or index >= len(st.session_state["usage_history"]):
+        return
+
+    # Get history item
+    history_item = st.session_state["usage_history"][index]
+
+    # Save current state to stack if it has content
+    if st.session_state["chat_input"] or st.session_state["analysis_result"]:
+        current_state = {
+            "chat_input": st.session_state["chat_input"],
+            "analysis_result": st.session_state["analysis_result"]
+        }
+        st.session_state["history_stack"].append(current_state)
+
+    # Restore state
+    st.session_state["chat_input"] = history_item["chat_input"]
+    st.session_state["analysis_result"] = history_item["analysis_result"]
+
+    # Rerun to update UI
+    st.rerun()
 
 # 直接使用 requests 庫調用 OpenAI API，避免使用 OpenAI 客戶端
 def call_openai_api(prompt, model="gpt-3.5-turbo", temperature=0.3, max_tokens=800):
@@ -585,12 +583,39 @@ with st.sidebar:
 
     # Add usage history section
     st.markdown("---")
-    with st.expander(f"📊 {current_text['usage_history_header']}", expanded=False):
+
+    # Add a toggle button for the history sidebar
+    if st.button(f"📊 {current_text['usage_history_toggle']}", use_container_width=True):
+        toggle_history_sidebar()
+
+    # Show history sidebar if enabled
+    if st.session_state["show_history_sidebar"]:
+        st.subheader(current_text['usage_history_header'])
+
         if not st.session_state["usage_history"]:
             st.info(current_text["usage_history_empty"])
         else:
-            for item in st.session_state["usage_history"]:
-                st.markdown(f"""<div class="usage-history-item">{item}</div>""", unsafe_allow_html=True)
+            # Display each history item with a restore button
+            for i, item in enumerate(st.session_state["usage_history"]):
+                with st.container():
+                    col1, col2 = st.columns([3, 1])
+
+                    with col1:
+                        title = item["title"]
+                        timestamp = item["timestamp"]
+                        st.markdown(f"**{title}**")
+                        st.caption(f"{timestamp}")
+
+                    with col2:
+                        # Button to restore this history item
+                        if st.button(
+                            current_text["usage_history_restore"],
+                            key=f"restore_btn_{i}",
+                            use_container_width=True
+                        ):
+                            restore_from_history(i)
+
+                st.markdown("---")
 
     # Add reset button - using a form to avoid callback issues
     with st.form(key="reset_form"):
@@ -672,7 +697,7 @@ with col_analyze:
 with col_history:
     history_button = st.button(
         current_text["view_history_button"],
-        on_click=toggle_history_modal,
+        on_click=toggle_history_sidebar,
         help=current_text["view_history_tooltip"],
         use_container_width=True
     )
@@ -759,15 +784,8 @@ Text content:
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態
 
-                # Record in usage history with timestamp
-                import datetime
-                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                history_item = current_text["usage_history_item"].format(time=current_time)
-                st.session_state["usage_history"].insert(0, history_item)  # Add to beginning of list
-
-                # Limit history to 10 items
-                if len(st.session_state["usage_history"]) > 10:
-                    st.session_state["usage_history"] = st.session_state["usage_history"][:10]
+                # Save to history
+                save_to_history(chat_input, output)
 
                 st.success(current_text["analysis_complete"])
 
@@ -785,39 +803,4 @@ if st.session_state["analysis_result"]:
     # 添加 Notion 集成部分
     render_notion_section(current_text, result_text)
 
-# Display the history modal if show_history_modal is True
-if st.session_state["show_history_modal"]:
-    # Create a container for the modal
-    modal_html = f"""
-    <div id="historyModal" class="modal-overlay" style="display: flex;">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 class="modal-title">{current_text['usage_history_header']}</h3>
-                <button class="modal-close-btn" onclick="closeHistoryModal()">&times;</button>
-            </div>
-            <div class="modal-content">
-    """
-
-    # Add history items or empty message
-    if not st.session_state["usage_history"]:
-        modal_html += f"""
-                <div class="usage-history-empty">{current_text['usage_history_empty']}</div>
-        """
-    else:
-        for item in st.session_state["usage_history"]:
-            modal_html += f"""
-                <div class="usage-history-item">{item}</div>
-            """
-
-    # Add modal footer with close button
-    modal_html += f"""
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn" onclick="closeHistoryModal()">{current_text['close_history_button']}</button>
-            </div>
-        </div>
-    </div>
-    """
-
-    # Display the modal
-    st.markdown(modal_html, unsafe_allow_html=True)
+# No longer using modal for history display - using sidebar instead
