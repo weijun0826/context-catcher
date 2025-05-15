@@ -65,6 +65,9 @@ ui_text = {
         "usage_history_header": "使用歷史",
         "usage_history_empty": "尚無使用歷史",
         "usage_history_item": "分析於 {time}",
+        "view_history_button": "📋 查看使用歷史",
+        "view_history_tooltip": "查看您的使用歷史記錄",
+        "close_history_button": "關閉",
         "reset_button": "🔄 重置頁面",
         "reset_tooltip": "清除所有輸入和結果，重新開始"
     },
@@ -118,6 +121,9 @@ ui_text = {
         "usage_history_header": "Usage History",
         "usage_history_empty": "No usage history yet",
         "usage_history_item": "Analysis at {time}",
+        "view_history_button": "📋 View Usage History",
+        "view_history_tooltip": "View your usage history",
+        "close_history_button": "Close",
         "reset_button": "🔄 Reset Page",
         "reset_tooltip": "Clear all inputs and results to start fresh"
     }
@@ -143,7 +149,11 @@ if "language" not in st.session_state:
 if "usage_history" not in st.session_state:
     st.session_state["usage_history"] = []
 
-# Custom CSS for better mobile experience
+# Initialize history modal state
+if "show_history_modal" not in st.session_state:
+    st.session_state["show_history_modal"] = False
+
+# Custom CSS and JavaScript for better mobile experience and modal functionality
 st.markdown("""
 <style>
     .main .block-container {
@@ -266,12 +276,134 @@ st.markdown("""
         border-radius: 4px;
         font-weight: 500;
     }
+
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 80%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 20px;
+        position: relative;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .modal-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .modal-content {
+        margin-bottom: 15px;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+
+    .modal-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .modal-btn:hover {
+        background-color: #45a049;
+    }
+
+    /* History button styles */
+    .history-btn {
+        background-color: #f0f2f6;
+        border-radius: 8px;
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        display: inline-block;
+        color: #31333F;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .history-btn:hover {
+        background-color: #e6e9ef;
+    }
 </style>
+
+<script>
+    // Function to toggle the history modal
+    function toggleHistoryModal() {
+        const modal = document.getElementById('historyModal');
+        if (modal.style.display === 'none' || modal.style.display === '') {
+            modal.style.display = 'flex';
+        } else {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Function to close the history modal
+    function closeHistoryModal() {
+        const modal = document.getElementById('historyModal');
+        modal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside the modal content
+    window.onclick = function(event) {
+        const modal = document.getElementById('historyModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
 """, unsafe_allow_html=True)
 
 # We'll set the page title and subtitle in the main content area after language selection
 
 # We'll set up the API key after language selection in the sidebar
+
+# Function to toggle the history modal
+def toggle_history_modal():
+    st.session_state["show_history_modal"] = not st.session_state["show_history_modal"]
 
 # 直接使用 requests 庫調用 OpenAI API，避免使用 OpenAI 客戶端
 def call_openai_api(prompt, model="gpt-3.5-turbo", temperature=0.3, max_tokens=800):
@@ -532,7 +664,18 @@ with col2:
             st.rerun()
 
 # 控制按鈕區域
-analyze_button = st.button(current_text["analyze_button"], use_container_width=True)
+col_analyze, col_history = st.columns([3, 1])
+
+with col_analyze:
+    analyze_button = st.button(current_text["analyze_button"], use_container_width=True)
+
+with col_history:
+    history_button = st.button(
+        current_text["view_history_button"],
+        on_click=toggle_history_modal,
+        help=current_text["view_history_tooltip"],
+        use_container_width=True
+    )
 
 # Session state variables are already initialized at the top of the script
 
@@ -641,3 +784,40 @@ if st.session_state["analysis_result"]:
 
     # 添加 Notion 集成部分
     render_notion_section(current_text, result_text)
+
+# Display the history modal if show_history_modal is True
+if st.session_state["show_history_modal"]:
+    # Create a container for the modal
+    modal_html = f"""
+    <div id="historyModal" class="modal-overlay" style="display: flex;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">{current_text['usage_history_header']}</h3>
+                <button class="modal-close-btn" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-content">
+    """
+
+    # Add history items or empty message
+    if not st.session_state["usage_history"]:
+        modal_html += f"""
+                <div class="usage-history-empty">{current_text['usage_history_empty']}</div>
+        """
+    else:
+        for item in st.session_state["usage_history"]:
+            modal_html += f"""
+                <div class="usage-history-item">{item}</div>
+            """
+
+    # Add modal footer with close button
+    modal_html += f"""
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeHistoryModal()">{current_text['close_history_button']}</button>
+            </div>
+        </div>
+    </div>
+    """
+
+    # Display the modal
+    st.markdown(modal_html, unsafe_allow_html=True)
