@@ -139,7 +139,7 @@ class NotionIntegration:
                         ]
                     },
                     "狀態": {  # status type (select)
-                        "select": {
+                        "status": {
                             "name": "待處理"  # Default status
                         }
                     },
@@ -149,7 +149,7 @@ class NotionIntegration:
                         }
                     },
                     "負責人": {  # person type (using rich_text as placeholder since we can't assign people via API)
-                        "rich_text": [
+                        "person": [
                             {
                                 "text": {
                                     "content": "待分配"  # Default assignee
