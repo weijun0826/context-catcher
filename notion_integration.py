@@ -116,17 +116,51 @@ class NotionIntegration:
         if not self.api_key or not self.database_id:
             return {"success": False, "message": "Notion API key or database ID is not set"}
 
+        # Convert "-" to "/" in todo_list for Notion compatibility
+        if todo_list:
+            todo_list = todo_list.replace("- [ ]", "/[ ]").replace("- [x]", "/[x]")
+
         try:
+            # Get current date for deadline (default to 7 days from now)
+            import datetime
+            default_deadline = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+
             # Prepare the page content
             payload = {
                 "parent": {"database_id": self.database_id},
                 "properties": {
-                    "Name": {
+                    "任務名稱": {  # Changed from "Name" to "任務名稱"
                         "title": [
                             {
                                 "text": {
                                     "content": title
                                 }
+                            }
+                        ]
+                    },
+                    "狀態": {
+                        "select": {
+                            "name": "待處理"  # Default status
+                        }
+                    },
+                    "截止日": {
+                        "date": {
+                            "start": default_deadline
+                        }
+                    },
+                    "負責人": {
+                        "rich_text": [
+                            {
+                                "text": {
+                                    "content": "待分配"  # Default assignee
+                                }
+                            }
+                        ]
+                    },
+                    "任務標籤": {
+                        "multi_select": [
+                            {
+                                "name": "自動生成"
                             }
                         ]
                     }
@@ -136,7 +170,7 @@ class NotionIntegration:
                         "object": "block",
                         "type": "heading_2",
                         "heading_2": {
-                            "rich_text": [{"type": "text", "text": {"content": "Summary"}}]
+                            "rich_text": [{"type": "text", "text": {"content": "摘要"}}]
                         }
                     },
                     {
@@ -150,7 +184,7 @@ class NotionIntegration:
                         "object": "block",
                         "type": "heading_2",
                         "heading_2": {
-                            "rich_text": [{"type": "text", "text": {"content": "To-Do List"}}]
+                            "rich_text": [{"type": "text", "text": {"content": "待辦事項"}}]
                         }
                     },
                     {
@@ -158,6 +192,17 @@ class NotionIntegration:
                         "type": "paragraph",
                         "paragraph": {
                             "rich_text": [{"type": "text", "text": {"content": todo_list}}]
+                        }
+                    }
+                ]
+            }
+
+            # Add task description
+            payload["properties"]["任務說明"] = {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": summary[:2000] if summary else ""  # Limit to 2000 chars
                         }
                     }
                 ]
@@ -226,6 +271,9 @@ def parse_analysis_result(result_text: str) -> Dict[str, str]:
             summary = section.split("\n", 1)[1].strip() if "\n" in section else ""
         elif "✅" in section or "To-Do" in section or "待辦" in section:
             todo_list = section.split("\n", 1)[1].strip() if "\n" in section else ""
+
+    # Format todo_list for better display in Notion
+    # We'll do the actual replacement of "- [ ]" to "/[ ]" in the create_page_with_analysis method
 
     return {
         "summary": summary,
