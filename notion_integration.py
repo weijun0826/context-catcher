@@ -101,6 +101,26 @@ class NotionIntegration:
         except Exception as e:
             return {"success": False, "message": f"Error getting database info: {str(e)}"}
 
+    def get_status_options(self) -> List[str]:
+        """
+        Get available status options from the Notion database.
+
+        Returns:
+            List of status option names
+        """
+        db_info = self.get_database_info()
+        if not db_info.get("success", False):
+            return ["Not started"]  # Default fallback
+
+        properties = db_info.get("properties", {})
+        status_property = properties.get("狀態", {})
+
+        if status_property.get("type") == "status":
+            options = status_property.get("status", {}).get("options", [])
+            return [option.get("name") for option in options if option.get("name")]
+
+        return ["Not started"]  # Default fallback
+
     def create_page_with_analysis(self, title: str, summary: str, todo_list: str) -> Dict[str, Any]:
         """
         Create a new page in the Notion database with analysis results.
@@ -125,6 +145,10 @@ class NotionIntegration:
             import datetime
             default_deadline = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
 
+            # Get available status options
+            status_options = self.get_status_options()
+            default_status = status_options[0] if status_options else "Not started"
+
             # Prepare the page content
             payload = {
                 "parent": {"database_id": self.database_id},
@@ -140,7 +164,7 @@ class NotionIntegration:
                     },
                     "狀態": {  # status type
                         "status": {
-                            "name": "待處理"  # Default status
+                            "name": default_status  # Using the first available status option
                         }
                     },
                     "截止日": {  # date type
