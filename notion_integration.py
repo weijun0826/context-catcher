@@ -129,7 +129,7 @@ class NotionIntegration:
             payload = {
                 "parent": {"database_id": self.database_id},
                 "properties": {
-                    "任務名稱": {  # Changed from "Name" to "任務名稱"
+                    "任務名稱": {  # title type
                         "title": [
                             {
                                 "text": {
@@ -138,17 +138,17 @@ class NotionIntegration:
                             }
                         ]
                     },
-                    "狀態": {
+                    "狀態": {  # status type (select)
                         "select": {
                             "name": "待處理"  # Default status
                         }
                     },
-                    "截止日": {
+                    "截止日": {  # date type
                         "date": {
                             "start": default_deadline
                         }
                     },
-                    "負責人": {
+                    "負責人": {  # person type (using rich_text as placeholder since we can't assign people via API)
                         "rich_text": [
                             {
                                 "text": {
@@ -157,7 +157,7 @@ class NotionIntegration:
                             }
                         ]
                     },
-                    "任務標籤": {
+                    "任務標籤": {  # multi-select type
                         "multi_select": [
                             {
                                 "name": "自動生成"
@@ -197,7 +197,7 @@ class NotionIntegration:
                 ]
             }
 
-            # Add task description
+            # Add task description (text type)
             payload["properties"]["任務說明"] = {
                 "rich_text": [
                     {
