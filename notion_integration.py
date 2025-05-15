@@ -138,7 +138,7 @@ class NotionIntegration:
                             }
                         ]
                     },
-                    "狀態": {  # status type (select)
+                    "狀態": {  # status type
                         "status": {
                             "name": "待處理"  # Default status
                         }
@@ -148,14 +148,8 @@ class NotionIntegration:
                             "start": default_deadline
                         }
                     },
-                    "負責人": {  # person type (using rich_text as placeholder since we can't assign people via API)
-                        "person": [
-                            {
-                                "text": {
-                                    "content": "待分配"  # Default assignee
-                                }
-                            }
-                        ]
+                    "負責人": {  # person type
+                        "people": []  # Empty array for people (can't assign specific people via API)
                     },
                     "任務標籤": {  # multi-select type
                         "multi_select": [
