@@ -138,7 +138,7 @@ class NotionIntegration:
 
         # Convert "-" to "/" in todo_list for Notion compatibility
         if todo_list:
-            todo_list = todo_list.replace("- [ ]", "/[ ]").replace("- [x]", "/[x]")
+            todo_list = todo_list.replace("- [ ]", "/[]").replace("- [x]", "/[x]")
 
         try:
             # Get current date for deadline (default to 7 days from now)
