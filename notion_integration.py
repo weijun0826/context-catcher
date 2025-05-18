@@ -136,10 +136,6 @@ class NotionIntegration:
         if not self.api_key or not self.database_id:
             return {"success": False, "message": "Notion API key or database ID is not set"}
 
-        # Convert "-" to "/" in todo_list for Notion compatibility
-        if todo_list:
-            todo_list = todo_list.replace("- [ ]", "/[]").replace("- [x]", "/[x]")
-
         try:
             # Get current date for deadline (default to 7 days from now)
             import datetime
@@ -204,13 +200,6 @@ class NotionIntegration:
                         "heading_2": {
                             "rich_text": [{"type": "text", "text": {"content": "待辦事項"}}]
                         }
-                    },
-                    {
-                        "object": "block",
-                        "type": "paragraph",
-                        "paragraph": {
-                            "rich_text": [{"type": "text", "text": {"content": todo_list}}]
-                        }
                     }
                 ]
             }
@@ -225,6 +214,26 @@ class NotionIntegration:
                     }
                 ]
             }
+
+            # Parse to-do list items and add them as to-do blocks
+            if todo_list:
+                todo_items = todo_list.strip().split('\n')
+                for item in todo_items:
+                    if item.strip().startswith('- [ ]') or item.strip().startswith('- [x]'):
+                        # Extract the task content
+                        is_checked = item.strip().startswith('- [x]')
+                        task_content = item.strip()[5:].strip()  # Remove "- [ ]" or "- [x]"
+
+                        # Add to-do block
+                        todo_block = {
+                            "object": "block",
+                            "type": "to_do",
+                            "to_do": {
+                                "rich_text": [{"type": "text", "text": {"content": task_content}}],
+                                "checked": is_checked
+                            }
+                        }
+                        payload["children"].append(todo_block)
 
             response = requests.post(
                 f"{self.base_url}/pages",

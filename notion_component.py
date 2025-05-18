@@ -141,8 +141,18 @@ def render_notion_section(ui_text, analysis_result=None):
             # Parse the analysis result
             parsed_result = parse_analysis_result(analysis_result)
 
-            # Default title with current date and time
-            default_title = f"Analysis {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            # Extract title from summary content using the same function as history
+            from main import extract_summary_title
+
+            # Get a meaningful title from the summary content
+            extracted_title = extract_summary_title(analysis_result)
+
+            # Use the stored analysis timestamp if available, otherwise use current time
+            analysis_time = st.session_state.get("analysis_timestamp", datetime.datetime.now())
+            time_str = analysis_time.strftime('%Y-%m-%d %H:%M')
+
+            # Combine the extracted title with the timestamp
+            default_title = f"{extracted_title} ({time_str})"
 
             # Title input
             notion_page_title = st.text_input(

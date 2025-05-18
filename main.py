@@ -166,6 +166,10 @@ if "current_page" not in st.session_state:
 if "history_stack" not in st.session_state:
     st.session_state["history_stack"] = []
 
+# Store analysis timestamp
+if "analysis_timestamp" not in st.session_state:
+    st.session_state["analysis_timestamp"] = None
+
 # Custom CSS for better mobile experience and sidebar functionality
 st.markdown("""
 <style>
@@ -336,7 +340,7 @@ st.markdown("""
 def toggle_history_sidebar():
     st.session_state["show_history_sidebar"] = not st.session_state["show_history_sidebar"]
 
-# Function to extract the first part of the summary from analysis result
+# Function to extract a meaningful title from the analysis result
 def extract_summary_title(analysis_result):
     if not analysis_result:
         return "Untitled Analysis"
@@ -346,16 +350,44 @@ def extract_summary_title(analysis_result):
 
     for section in sections:
         if "📌" in section or "Summary" in section or "摘要" in section:
-            # Get the first bullet point
+            # Get the first bullet point that's not a placeholder
             lines = section.strip().split("\n")
             for line in lines:
-                if line.strip().startswith("- "):
-                    # Return the first 30 characters of the first bullet point
+                if line.strip().startswith("- ") and not (
+                    "[" in line and "]" in line and
+                    ("主題" in line or "topic" in line or "背景" in line or "background" in line)
+                ):
+                    # Clean up the title - remove placeholders and brackets
                     title = line.strip()[2:].strip()
-                    return title[:50] + ("..." if len(title) > 50 else "")
+                    title = title.replace("[", "").replace("]", "")
 
-    # If no summary found, return a default title
-    return "Untitled Analysis"
+                    # Limit length for display purposes
+                    if len(title) > 50:
+                        # Try to find a natural break point
+                        break_point = title[:50].rfind(",")
+                        if break_point == -1:
+                            break_point = title[:50].rfind("，")
+                        if break_point == -1:
+                            break_point = title[:50].rfind(".")
+                        if break_point == -1:
+                            break_point = title[:50].rfind("。")
+                        if break_point == -1:
+                            break_point = title[:50].rfind(" ")
+
+                        if break_point != -1:
+                            return title[:break_point + 1] + "..."
+                        else:
+                            return title[:50] + "..."
+                    return title
+
+            # If we didn't find a good bullet point, use the section title
+            section_title = section.strip().split("\n")[0].strip() if "\n" in section else section.strip()
+            if section_title:
+                return "Summary of " + section_title[:40]
+
+    # If no summary found, return a default title with timestamp
+    import datetime
+    return f"Analysis {datetime.datetime.now().strftime('%Y-%m-%d')}"
 
 # Function to save current state to history
 def save_to_history(chat_input, analysis_result):
@@ -725,50 +757,88 @@ if analyze_button:
             # 根據選擇的語言設置提示詞
             if st.session_state["language"] == "中文":
                 prompt = f"""
-你是一個高效的AI分析助手，專門處理文字輸入並提取核心資訊。
+你是一個專業的AI分析助手，專門處理會議記錄、對話內容和文字資料，提取關鍵資訊並生成詳細的分析報告。
 
-請根據以下文字內容進行分析：
+請對以下文字內容進行深入分析：
 
-1. 讀取輸入的文字內容，分析並提取出最重要的資訊與重點，生成簡明摘要。
-2. 從文字中識別可執行的工作項目或後續行動事項，列成清單格式的待辦事項。
-3. 最後，請將摘要與待辦事項整理成 **Markdown 格式** 輸出，結構清晰、易於閱讀與複製使用。
+1. 仔細閱讀輸入的文字內容，識別並提取以下要素：
+   - 主要討論主題和背景
+   - 關鍵決策和結論
+   - 重要的數據點和事實
+   - 參與者的角色和責任
+   - 時間線和截止日期
+
+2. 生成全面而詳細的摘要，確保：
+   - 涵蓋所有重要資訊
+   - 按邏輯順序組織內容
+   - 提供足夠的上下文以便理解
+   - 突出關鍵見解和結論
+
+3. 從文字中識別所有可執行的工作項目，確保每個待辦事項：
+   - 明確具體且可操作
+   - 包含負責人（如有提及）
+   - 包含截止日期（如有提及）
+   - 按優先順序或時間順序排列
+   - 使用動詞開頭，清晰描述需要完成的行動
+
+4. 最後，將摘要與待辦事項整理成 **Markdown 格式** 輸出，結構清晰、易於閱讀與複製使用。
 
 請使用以下格式輸出：
 
 ## 📌 摘要
-- 重點1
-- 重點2
-- 重點3
+- [主題/背景相關的重點]
+- [決策和結論相關的重點]
+- [時間線和責任相關的重點]
+- [其他重要資訊]
 
 ## ✅ 待辦事項清單
-- [ ] 工作項目1
-- [ ] 工作項目2
-- [ ] 工作項目3
+- [ ] [動詞開頭的具體任務1]，負責人：[姓名]，截止日期：[日期]
+- [ ] [動詞開頭的具體任務2]，負責人：[姓名]，截止日期：[日期]
+- [ ] [動詞開頭的具體任務3]
 
 文字內容：
 {chat_input}
 """
             else:
                 prompt = f"""
-You are an efficient AI analysis assistant, specializing in processing text input and extracting core information.
+You are a professional AI analysis assistant, specializing in processing meeting notes, conversation content, and text data to extract key information and generate detailed analysis reports.
 
-Please analyze the following text content:
+Please conduct an in-depth analysis of the following text content:
 
-1. Read the input text, analyze and extract the most important information and key points, generating a concise summary.
-2. Identify actionable work items or follow-up actions from the text, listing them in a to-do list format.
-3. Finally, organize the summary and to-do items into a **Markdown format** output that is clear, easy to read, and copy.
+1. Carefully read the input text and identify the following elements:
+   - Main discussion topics and background
+   - Key decisions and conclusions
+   - Important data points and facts
+   - Roles and responsibilities of participants
+   - Timelines and deadlines
+
+2. Generate a comprehensive and detailed summary, ensuring:
+   - All important information is covered
+   - Content is organized in logical order
+   - Sufficient context is provided for understanding
+   - Key insights and conclusions are highlighted
+
+3. Identify all actionable work items from the text, ensuring each to-do item:
+   - Is clear, specific, and actionable
+   - Includes the responsible person (if mentioned)
+   - Includes the deadline (if mentioned)
+   - Is arranged by priority or chronological order
+   - Starts with a verb, clearly describing the action to be completed
+
+4. Finally, organize the summary and to-do items into a **Markdown format** output that is clear, easy to read, and copy.
 
 Please use the following output format:
 
 ## 📌 Summary
-- Key point 1
-- Key point 2
-- Key point 3
+- [Point related to topic/background]
+- [Point related to decisions and conclusions]
+- [Point related to timeline and responsibilities]
+- [Other important information]
 
 ## ✅ To-Do List
-- [ ] Task item 1
-- [ ] Task item 2
-- [ ] Task item 3
+- [ ] [Specific task starting with a verb 1], Responsible: [Name], Deadline: [Date]
+- [ ] [Specific task starting with a verb 2], Responsible: [Name], Deadline: [Date]
+- [ ] [Specific task starting with a verb 3]
 
 Text content:
 {chat_input}
@@ -781,6 +851,9 @@ Text content:
                 st.error(f"⚠️ {output}")
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
+                # Store the current timestamp when analysis is completed
+                st.session_state["analysis_timestamp"] = datetime.datetime.now()
+
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態
 
