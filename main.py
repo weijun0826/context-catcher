@@ -437,16 +437,16 @@ def save_to_history(chat_input, analysis_result):
     # Extract title from the summary
     title = extract_summary_title(analysis_result)
 
-    # Create history item with accurate timestamp using local timezone
-    current_time = get_local_time().replace(microsecond=0)
-    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    # Create history item with date only (no time) to avoid timezone issues
+    current_time = get_local_time()
+    formatted_date = current_time.strftime("%Y-%m-%d")  # Only keep the date part
 
     history_item = {
         "title": title,
-        "timestamp": formatted_time,
+        "timestamp": formatted_date,
         "chat_input": chat_input,
         "analysis_result": analysis_result,
-        "datetime_obj": current_time  # Store the actual datetime object for future reference
+        "datetime_obj": current_time  # Still store the full datetime object for future reference if needed
     }
 
     # Add to history
@@ -917,8 +917,8 @@ Text content:
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
                 # Store the current timestamp when analysis is completed
-                # Use timezone-aware datetime with local timezone to ensure correct local time
-                st.session_state["analysis_timestamp"] = get_local_time().replace(microsecond=0)
+                # Use timezone-aware datetime with local timezone
+                st.session_state["analysis_timestamp"] = get_local_time()
 
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態

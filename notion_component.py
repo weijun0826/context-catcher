@@ -153,17 +153,16 @@ def render_notion_section(ui_text, analysis_result=None):
             extracted_title = extract_summary_title(analysis_result)
 
             # Use the stored analysis timestamp if available, otherwise use current time
-            # Ensure we have a timezone-aware datetime with microseconds removed for consistent formatting
-            current_time = get_local_time().replace(microsecond=0)
+            current_time = get_local_time()
 
             # Get the timestamp from session state or use current time
             analysis_time = st.session_state.get("analysis_timestamp", current_time)
 
-            # Format with full time including seconds for accuracy
-            time_str = analysis_time.strftime('%Y-%m-%d %H:%M:%S')
+            # Format with date only to avoid timezone issues
+            date_str = analysis_time.strftime('%Y-%m-%d')
 
-            # Combine the extracted title with the timestamp
-            default_title = f"{extracted_title} ({time_str})"
+            # Combine the extracted title with the date
+            default_title = f"{extracted_title} ({date_str})"
 
             # Title input
             notion_page_title = st.text_input(
