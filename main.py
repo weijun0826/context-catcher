@@ -171,6 +171,45 @@ if "history_stack" not in st.session_state:
 if "analysis_timestamp" not in st.session_state:
     st.session_state["analysis_timestamp"] = None
 
+# Detect mobile devices for responsive layout
+# This is a simple detection based on viewport width
+# We'll inject JavaScript to detect screen size and set a session state variable
+st.markdown("""
+<script>
+    // Detect if device is mobile based on screen width
+    const isMobile = window.innerWidth < 768;
+
+    // Store the result in sessionStorage
+    sessionStorage.setItem('isMobile', isMobile);
+
+    // Function to send the value to Streamlit
+    function sendToStreamlit() {
+        const data = {
+            isMobile: isMobile
+        };
+        window.parent.postMessage({
+            type: "streamlit:setComponentValue",
+            value: data
+        }, "*");
+    }
+
+    // Send immediately and also whenever window is resized
+    sendToStreamlit();
+    window.addEventListener('resize', function() {
+        const newIsMobile = window.innerWidth < 768;
+        if (newIsMobile !== isMobile) {
+            sessionStorage.setItem('isMobile', newIsMobile);
+            sendToStreamlit();
+            location.reload(); // Reload to apply new layout
+        }
+    });
+</script>
+""", unsafe_allow_html=True)
+
+# Set mobile detection in session state (default to false)
+if "_is_mobile" not in st.session_state:
+    st.session_state["_is_mobile"] = False
+
 # Custom CSS for better mobile experience and sidebar functionality
 st.markdown("""
 <style>
@@ -278,16 +317,6 @@ st.markdown("""
         background-color: #0b7dda;
     }
 
-    /* Usage history styles */
-    .usage-history-item {
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        border-left: 3px solid #4CAF50;
-        font-size: 14px;
-    }
-
     /* Form button styles */
     .stButton button, .stForm button {
         width: 100%;
@@ -295,7 +324,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Enhanced history item styles */
+    /* Enhanced history item styles with improved responsiveness */
     .usage-history-item {
         padding: 12px 15px;
         margin-bottom: 12px;
@@ -303,12 +332,63 @@ st.markdown("""
         border-radius: 6px;
         border-left: 3px solid #4CAF50;
         transition: all 0.2s ease;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
     }
 
     .usage-history-item:hover {
         background-color: #f0f2f6;
         border-left-color: #2E7D32;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Responsive history layout */
+    @media (max-width: 768px) {
+        .history-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-title {
+            margin-bottom: 8px;
+            font-size: 14px !important;
+        }
+
+        .history-timestamp {
+            font-size: 12px !important;
+            margin-bottom: 8px;
+        }
+
+        .history-button {
+            width: 100%;
+            margin-top: 8px;
+        }
+    }
+
+    /* Table styles for history content */
+    .stMarkdown table {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        display: block;
+        white-space: nowrap;
+        border-collapse: collapse;
+    }
+
+    .stMarkdown th, .stMarkdown td {
+        padding: 6px 8px;
+        text-align: left;
+        border: 1px solid #ddd;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .stMarkdown th, .stMarkdown td {
+            padding: 4px 6px;
+            font-size: 12px;
+        }
     }
 
     /* History button styles */
@@ -349,12 +429,14 @@ def save_to_history(chat_input, analysis_result):
     # Extract title from the summary
     title = extract_summary_title(analysis_result)
 
-    # Create history item
+    # Create history item with accurate timestamp
+    current_time = datetime.datetime.now().replace(microsecond=0)
     history_item = {
         "title": title,
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": current_time.strftime("%Y-%m-%d %H:%M:%S"),
         "chat_input": chat_input,
-        "analysis_result": analysis_result
+        "analysis_result": analysis_result,
+        "datetime_obj": current_time  # Store the actual datetime object for future reference
     }
 
     # Add to history
@@ -579,25 +661,46 @@ with st.sidebar:
         if not st.session_state["usage_history"]:
             st.info(current_text["usage_history_empty"])
         else:
-            # Display each history item with a restore button
+            # Display each history item with a restore button - improved responsive layout
             for i, item in enumerate(st.session_state["usage_history"]):
+                # Use a container with custom CSS class for better responsiveness
                 with st.container():
-                    col1, col2 = st.columns([3, 1])
+                    # For larger screens, use columns
+                    if st.session_state.get("_is_mobile", False):
+                        # Mobile layout - stacked
+                        st.markdown(f"""
+                        <div class="history-container">
+                            <div class="history-title"><strong>{item["title"]}</strong></div>
+                            <div class="history-timestamp">{item["timestamp"]}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    with col1:
-                        title = item["title"]
-                        timestamp = item["timestamp"]
-                        st.markdown(f"**{title}**")
-                        st.caption(f"{timestamp}")
-
-                    with col2:
                         # Button to restore this history item
                         if st.button(
                             current_text["usage_history_restore"],
                             key=f"restore_btn_{i}",
-                            use_container_width=True
+                            use_container_width=True,
+                            type="primary"
                         ):
                             restore_from_history(i)
+                    else:
+                        # Desktop layout - columns
+                        col1, col2 = st.columns([3, 1])
+
+                        with col1:
+                            title = item["title"]
+                            timestamp = item["timestamp"]
+                            st.markdown(f"**{title}**")
+                            st.caption(f"{timestamp}")
+
+                        with col2:
+                            # Button to restore this history item
+                            if st.button(
+                                current_text["usage_history_restore"],
+                                key=f"restore_btn_{i}",
+                                use_container_width=True
+                            ):
+                                restore_from_history(i)
 
                 st.markdown("---")
 
@@ -804,7 +907,8 @@ Text content:
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
                 # Store the current timestamp when analysis is completed
-                st.session_state["analysis_timestamp"] = datetime.datetime.now()
+                # Use timezone-aware datetime to ensure correct local time
+                st.session_state["analysis_timestamp"] = datetime.datetime.now().replace(microsecond=0)
 
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態

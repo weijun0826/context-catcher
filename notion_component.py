@@ -146,8 +146,12 @@ def render_notion_section(ui_text, analysis_result=None):
             extracted_title = extract_summary_title(analysis_result)
 
             # Use the stored analysis timestamp if available, otherwise use current time
-            analysis_time = st.session_state.get("analysis_timestamp", datetime.datetime.now())
-            time_str = analysis_time.strftime('%Y-%m-%d %H:%M')
+            # Ensure we have a timezone-aware datetime with microseconds removed for consistent formatting
+            current_time = datetime.datetime.now().replace(microsecond=0)
+            analysis_time = st.session_state.get("analysis_timestamp", current_time)
+
+            # Format with full time including seconds for accuracy
+            time_str = analysis_time.strftime('%Y-%m-%d %H:%M:%S')
 
             # Combine the extracted title with the timestamp
             default_title = f"{extracted_title} ({time_str})"
