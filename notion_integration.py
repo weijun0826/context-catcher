@@ -2,7 +2,15 @@ import os
 import requests
 import json
 import streamlit as st
+import datetime
 from typing import Dict, Any, Optional, List
+
+# 獲取本地時區的時間
+def get_local_time():
+    """獲取當前本地時間，包含時區信息"""
+    # 使用本地時區
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    return datetime.datetime.now(local_tz)
 
 class NotionIntegration:
     """
@@ -138,8 +146,9 @@ class NotionIntegration:
 
         try:
             # Get current date for deadline (default to 7 days from now)
-            import datetime
-            default_deadline = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+            # Use local timezone for accurate time
+            current_time = get_local_time()
+            default_deadline = (current_time + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
 
             # Get available status options
             status_options = self.get_status_options()

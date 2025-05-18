@@ -4,8 +4,16 @@ import requests
 import json
 import time
 import datetime
+import pytz
 from notion_component import render_notion_section
 from utils import extract_summary_title
+
+# 獲取本地時區
+def get_local_time():
+    """獲取當前本地時間，包含時區信息"""
+    # 使用本地時區
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    return datetime.datetime.now(local_tz)
 
 # Page configuration
 st.set_page_config(
@@ -429,11 +437,13 @@ def save_to_history(chat_input, analysis_result):
     # Extract title from the summary
     title = extract_summary_title(analysis_result)
 
-    # Create history item with accurate timestamp
-    current_time = datetime.datetime.now().replace(microsecond=0)
+    # Create history item with accurate timestamp using local timezone
+    current_time = get_local_time().replace(microsecond=0)
+    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
     history_item = {
         "title": title,
-        "timestamp": current_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": formatted_time,
         "chat_input": chat_input,
         "analysis_result": analysis_result,
         "datetime_obj": current_time  # Store the actual datetime object for future reference
@@ -907,8 +917,8 @@ Text content:
                 st.info("如果遇到 API 錯誤，請檢查您的 API key 是否有效，以及是否有足夠的配額。")
             else:
                 # Store the current timestamp when analysis is completed
-                # Use timezone-aware datetime to ensure correct local time
-                st.session_state["analysis_timestamp"] = datetime.datetime.now().replace(microsecond=0)
+                # Use timezone-aware datetime with local timezone to ensure correct local time
+                st.session_state["analysis_timestamp"] = get_local_time().replace(microsecond=0)
 
                 st.session_state["analysis_result"] = output
                 st.session_state["result_displayed"] = False  # 重設顯示狀態

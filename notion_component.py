@@ -3,6 +3,13 @@ import datetime
 from notion_integration import NotionIntegration, get_notion_credentials_from_secrets, parse_analysis_result
 from utils import extract_summary_title
 
+# 獲取本地時區的時間
+def get_local_time():
+    """獲取當前本地時間，包含時區信息"""
+    # 使用本地時區
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    return datetime.datetime.now(local_tz)
+
 def render_notion_section(ui_text, analysis_result=None):
     """
     Render the Notion integration section in the Streamlit app.
@@ -147,7 +154,9 @@ def render_notion_section(ui_text, analysis_result=None):
 
             # Use the stored analysis timestamp if available, otherwise use current time
             # Ensure we have a timezone-aware datetime with microseconds removed for consistent formatting
-            current_time = datetime.datetime.now().replace(microsecond=0)
+            current_time = get_local_time().replace(microsecond=0)
+
+            # Get the timestamp from session state or use current time
             analysis_time = st.session_state.get("analysis_timestamp", current_time)
 
             # Format with full time including seconds for accuracy
