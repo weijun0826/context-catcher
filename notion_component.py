@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
 from notion_integration import NotionIntegration, get_notion_credentials_from_secrets, parse_analysis_result
+from utils import extract_summary_title
 
 def render_notion_section(ui_text, analysis_result=None):
     """
@@ -141,10 +142,7 @@ def render_notion_section(ui_text, analysis_result=None):
             # Parse the analysis result
             parsed_result = parse_analysis_result(analysis_result)
 
-            # Extract title from summary content using the same function as history
-            from main import extract_summary_title
-
-            # Get a meaningful title from the summary content
+            # Get a meaningful title from the summary content using the utility function
             extracted_title = extract_summary_title(analysis_result)
 
             # Use the stored analysis timestamp if available, otherwise use current time
